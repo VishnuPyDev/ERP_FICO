@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STACKLY OneERP - Authentication Test</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            margin: 0;
+            padding: 30px;
+            color: #183153;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 15px #0001;
+        }
+
+        h2 {
+            text-align: center;
+            color: #1559b7;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin: 8px 0 15px;
+            border: 1px solid #ccd5e2;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 11px 16px;
+            margin: 5px 3px;
+            border: none;
+            border-radius: 6px;
+            background: #1768d8;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #104fa8;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 12px;
+            background: #edf3fb;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>STACKLY OneERP Login</h2>
+
+    <label>Full Name (registration only)</label>
+    <input type="text" id="fullName" placeholder="Enter full name">
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="Enter email">
+
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Minimum 12 characters">
+
+    <button onclick="registerUser()">Register</button>
+    <button onclick="loginUser()">Login</button>
+
+    <hr>
+
+    <button onclick="checkSession()">Check Session</button>
+    <button onclick="logoutUser()">Logout</button>
+
+    <div id="result">Authentication status will appear here.</div>
+
+</div>
+
+<script>
+    const API = "http://127.0.0.1:8000/api/auth";
+
+    function showResult(message) {
+        document.getElementById("result").textContent = message;
+    }
+
+    async function apiRequest(endpoint, method = "GET", data = null) {
+        const options = {
+            method: method,
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+
+        if (data !== null) {
+            options.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(`${API}${endpoint}`, options);
+
+        if (response.status === 204) {
+            return {
+                ok: response.ok,
+                data: null
+            };
+        }
+
+        const result = await response.json();
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            data: result
+        };
+    }
+
+    async function registerUser() {
+        try {
+            const data = {
+                full_name: document.getElementById("fullName").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+
+            const result = await apiRequest(
+                "/register",
+                "POST",
+                data
+            );
+
+            if (!result.ok) {
+                showResult("Registration failed:\n" +
+                    JSON.stringify(result.data, null, 2));
+                return;
+            }
+
+            showResult("Registration successful!\n" +
+                JSON.stringify(result.data, null, 2));
+
+        } catch (error) {
+            showResult("Error: " + error.message);
+        }
+    }
+
+    async function loginUser() {
+        try {
+            const data = {
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+
+            const result = await apiRequest(
+                "/login",
+                "POST",
+                data
+            );
+
+            if (!result.ok) {
+                showResult("Login failed:\n" +
+                    JSON.stringify(result.data, null, 2));
+                return;
+            }
+
+            showResult("Login successful!\n" +
+                JSON.stringify(result.data, null, 2));
+
+        } catch (error) {
+            showResult("Error: " + error.message);
+        }
+    }
+
+    async function checkSession() {
+        try {
+            const result = await apiRequest("/me");
+
+            if (result.data.authenticated) {
+                showResult("User is logged in!\n" +
+                    JSON.stringify(result.data, null, 2));
+            } else {
+                showResult("No active login session.");
+            }
+
+        } catch (error) {
+            showResult("Error: " + error.message);
+        }
+    }
+
+    async function logoutUser() {
+        try {
+            const result = await apiRequest(
+                "/logout",
+                "POST"
+            );
+
+            if (!result.ok) {
+                showResult("Logout failed.");
+                return;
+            }
+
+            showResult("Logged out successfully!");
+
+        } catch (error) {
+            showResult("Error: " + error.message);
+        }
+    }
+</script>
+
+</body>
+</html>

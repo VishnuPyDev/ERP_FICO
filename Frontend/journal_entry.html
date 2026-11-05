@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Journal Entries | STACKLY OneERP</title>
+<style>
+:root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#142b49;background:#f3f6fb}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1500px;margin:auto;padding:26px}
+.head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+h1{margin:0 0 6px;font-size:29px}h2{margin:0 0 16px;font-size:20px}p{margin:0;color:#647894}
+.card{background:#fff;border:1px solid #dce5f2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px #173a6508}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:7px}.field label{font-size:13px;font-weight:650;color:#425873}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #d5dfed;border-radius:8px;font:inherit;background:white;color:#142b49}
+textarea{min-height:42px;resize:vertical}.btn{border:0;border-radius:8px;padding:10px 14px;font-weight:650;cursor:pointer;background:#1769df;color:white}
+.btn.secondary{background:#e8f0fc;color:#1b5eaf}.btn.danger{background:#fff0f0;color:#b42318}.btn.success{background:#16834a}
+.btn:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.msg{display:none;margin-top:12px;padding:11px 13px;border-radius:8px}.msg.ok{display:block;background:#e8f8ef;color:#17683a}.msg.err{display:block;background:#fff0f0;color:#a32626}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f7f9fd;border-radius:10px;padding:14px;color:#647894;font-size:13px}.stat strong{display:block;font-size:24px;color:#142b49;margin-top:7px}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:900px}th,td{text-align:left;padding:11px;border-bottom:1px solid #e8edf5;font-size:13px}th{background:#f7f9fd;color:#526782;white-space:nowrap}
+.badge{display:inline-block;padding:5px 9px;border-radius:99px;background:#e8f0fc;color:#225caa;font-size:11px;font-weight:700}.badge.POSTED{background:#e8f8ef;color:#17683a}.badge.REVERSED{background:#fff0f0;color:#a32626}
+.lines-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0 10px}
+.line-table{min-width:850px}.line-table input,.line-table select{padding:8px;font-size:13px}
+.totals{display:flex;justify-content:flex-end;gap:25px;margin-top:14px;font-weight:700}.totals span{color:#647894}.balance{padding:9px 12px;border-radius:8px;background:#e8f8ef;color:#17683a}.unbalanced{background:#fff0f0;color:#a32626}
+.modal{display:none;position:fixed;inset:0;background:#10233d88;z-index:10;padding:25px;overflow:auto}.modal-box{max-width:1000px;margin:30px auto;background:#fff;border-radius:14px;padding:22px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,1fr)}.wrap{padding:15px}}
+@media(max-width:550px){.grid,.stats{grid-template-columns:1fr}.wrap{padding:10px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="head">
+    <div><h1>Journal Entry Management</h1><p>Create, validate, post and reverse accounting journal entries.</p></div>
+    <div class="actions">
+      <button class="btn secondary" id="refreshBtn">↻ Refresh</button>
+    </div>
+  </div>
+
+  <section class="card">
+    <h2>Company & Fiscal Selection</h2>
+    <div class="grid">
+      <div class="field"><label for="companyId">Company ID *</label><input id="companyId" type="number" min="1" value="1"></div>
+      <div class="field"><label for="fiscalYear">Fiscal Year *</label><select id="fiscalYear"><option value="">Load fiscal years</option></select></div>
+      <div class="field"><label for="fiscalPeriod">Fiscal Period *</label><select id="fiscalPeriod"><option value="">Select fiscal year first</option></select></div>
+      <div class="field"><label>&nbsp;</label><button class="btn" id="loadContext">Load Company Data</button></div>
+    </div>
+    <div id="message" class="msg" role="status"></div>
+  </section>
+
+  <section class="card">
+    <h2>Journal Entry Header</h2>
+    <input type="hidden" id="entryId">
+    <div class="grid">
+      <div class="field"><label for="entryDate">Entry Date *</label><input id="entryDate" type="date"></div>
+      <div class="field"><label for="postingDate">Posting Date *</label><input id="postingDate" type="date"></div>
+      <div class="field"><label for="currency">Currency *</label><select id="currency"><option>INR</option><option>USD</option><option>EUR</option><option>GBP</option><option>AED</option><option>SGD</option></select></div>
+      <div class="field"><label for="reference">Reference Number</label><input id="reference" maxlength="60" placeholder="INV-2026-001"></div>
+      <div class="field" style="grid-column:span 2"><label for="description">Description *</label><input id="description" maxlength="255" placeholder="Record office rent payment"></div>
+      <div class="field"><label for="createdBy">Prepared By</label><input id="createdBy" maxlength="100" placeholder="User name"></div>
+    </div>
+
+    <div class="lines-head"><h2 style="margin:0">Journal Lines</h2><button class="btn secondary" id="addLine">+ Add Line</button></div>
+    <div class="tablewrap">
+      <table class="line-table">
+        <thead><tr><th>#</th><th>Account</th><th>Line Description</th><th>Debit</th><th>Credit</th><th>Cost Center</th><th>Action</th></tr></thead>
+        <tbody id="lineRows"></tbody>
+      </table>
+    </div>
+    <div class="totals">
+      <div><span>Total Debit:</span> <strong id="totalDebit">0.00</strong></div>
+      <div><span>Total Credit:</span> <strong id="totalCredit">0.00</strong></div>
+      <div id="balanceState" class="balance">Balanced</div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="saveDraft">Save Draft</button>
+      <button class="btn success" id="saveAndPost">Save & Post</button>
+      <button class="btn secondary" id="clearForm">Clear Form</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="head">
+      <div><h2>Journal Entries</h2><p>Draft entries can be edited or deleted. Posted entries can be reversed.</p></div>
+      <div class="actions" style="margin:0">
+        <select id="statusFilter" style="min-width:130px"><option value="">All Statuses</option><option>DRAFT</option><option>POSTED</option><option>REVERSED</option></select>
+        <input id="search" placeholder="Search entry number / description" style="min-width:230px">
+        <button class="btn secondary" id="searchBtn">Search</button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat">Total Entries<strong id="statTotal">0</strong></div>
+      <div class="stat">Draft<strong id="statDraft">0</strong></div>
+      <div class="stat">Posted<strong id="statPosted">0</strong></div>
+      <div class="stat">Reversed<strong id="statReversed">0</strong></div>
+    </div>
+    <div class="tablewrap" style="margin-top:16px">
+      <table><thead><tr><th>Entry Number</th><th>Entry Date</th><th>Posting Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="entries"><tr><td colspan="8">Load company data to view journal entries.</td></tr></tbody></table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="head"><div><h2>Trial Balance Preview</h2><p>Calculated from posted and reversed journal entries.</p></div><button class="btn secondary" id="loadTrialBalance">Load Trial Balance</button></div>
+    <div class="tablewrap"><table><thead><tr><th>Account Code</th><th>Account Name</th><th>Total Debit</th><th>Total Credit</th><th>Net Debit</th><th>Net Credit</th></tr></thead><tbody id="trialRows"><tr><td colspan="6">Click Load Trial Balance.</td></tr></tbody></table></div>
+  </section>
+</main>
+
+<div class="modal" id="detailModal"><div class="modal-box">
+  <div class="head"><h2>Journal Entry Details</h2><button class="btn secondary" id="closeModal">Close</button></div>
+  <div id="detailContent"></div>
+</div></div>
+
+<script>
+const API="http://127.0.0.1:8000/api/journal-entries";
+const FISCAL_API="http://127.0.0.1:8000/api/fiscal";
+const $=id=>document.getElementById(id);
+let accounts=[], years=[], periods=[], entries=[];
+const today=new Date().toISOString().slice(0,10);
+$("entryDate").value=today;$("postingDate").value=today;
+
+function showMessage(text,ok=false){$("message").textContent=text;$("message").className="msg "+(ok?"ok":"err")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function request(url,options={}){
+  const response=await fetch(url,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
+  let data;try{data=await response.json()}catch{data=null}
+  if(!response.ok){
+    let detail=data?.detail;
+    if(Array.isArray(detail))detail=detail.map(x=>x.msg).join("; ");
+    throw new Error(detail||`Request failed (${response.status})`);
+  }
+  return data;
+}
+function companyId(){const n=Number($("companyId").value);if(!Number.isInteger(n)||n<=0)throw Error("Enter a valid existing Company ID.");return n}
+function selectedYear(){return Number($("fiscalYear").value)||0}
+function selectedPeriod(){return Number($("fiscalPeriod").value)||0}
+
+async function loadContext(){
+  try{
+    const id=companyId();
+    years=await request(`${FISCAL_API}/years?company_id=${id}`);
+    $("fiscalYear").innerHTML='<option value="">Select fiscal year</option>'+years.map(y=>`<option value="${y.id}">${esc(y.year_code)} - ${esc(y.year_name)} (${y.start_date} to ${y.end_date})</option>`).join("");
+    $("fiscalPeriod").innerHTML='<option value="">Select fiscal year first</option>';
+    accounts=await request(`${API}/accounts?company_id=${id}`);
+    if(!accounts.length)showMessage("Company loaded, but no active Chart of Accounts were found. Create/activate accounts first.");
+    else showMessage(`Loaded ${years.length} fiscal year(s) and ${accounts.length} active account(s).`,true);
+    await loadEntries();
+    updateLineAccountOptions();
+  }catch(e){showMessage(e.message)}
+}
+async function loadPeriods(){
+  try{
+    const fy=selectedYear();
+    if(!fy){$("fiscalPeriod").innerHTML='<option value="">Select fiscal year first</option>';periods=[];return}
+    periods=await request(`${FISCAL_API}/periods?company_id=${companyId()}&fiscal_year_id=${fy}`);
+    $("fiscalPeriod").innerHTML='<option value="">Select fiscal period</option>'+periods.map(p=>`<option value="${p.id}">${esc(p.period_name)} (${p.start_date} to ${p.end_date}) - ${esc(p.status)}</option>`).join("");
+  }catch(e){showMessage(e.message)}
+}
+function updateLineAccountOptions(){
+  document.querySelectorAll(".account-select").forEach(select=>{
+    const old=select.value;
+    select.innerHTML='<option value="">Select account</option>'+accounts.map(a=>`<option value="${a.id}">${esc(a.account_code)} - ${esc(a.account_name)}</option>`).join("");
+    if(old)select.value=old;
+  });
+}
+function addLine(line={}){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td class="line-no"></td>
+    <td><select class="account-select"><option value="">Select account</option></select></td>
+    <td><input class="line-description" maxlength="255" placeholder="Line description" value="${esc(line.line_description||"")}"></td>
+    <td><input class="debit" type="number" min="0" step="0.01" value="${Number(line.debit||0).toFixed(2)}"></td>
+    <td><input class="credit" type="number" min="0" step="0.01" value="${Number(line.credit||0).toFixed(2)}"></td>
+    <td><input class="cost-center" maxlength="50" placeholder="Optional" value="${esc(line.cost_center||"")}"></td>
+    <td><button type="button" class="btn danger remove-line">Remove</button></td>`;
+  $("lineRows").appendChild(tr);
+  updateLineAccountOptions();
+  if(line.account_id)tr.querySelector(".account-select").value=String(line.account_id);
+  tr.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",calculateTotals));
+  tr.querySelector(".remove-line").onclick=()=>{if($("lineRows").children.length<=2){showMessage("A journal entry requires at least two lines.");return}tr.remove();renumberLines();calculateTotals()};
+  renumberLines();calculateTotals();
+}
+function renumberLines(){[...$("lineRows").children].forEach((tr,i)=>tr.querySelector(".line-no").textContent=i+1)}
+function numeric(v){const n=Number(v||0);return Number.isFinite(n)?n:0}
+function calculateTotals(){
+  let d=0,c=0;
+  document.querySelectorAll("#lineRows tr").forEach(tr=>{d+=numeric(tr.querySelector(".debit").value);c+=numeric(tr.querySelector(".credit").value)});
+  d=Math.round((d+Number.EPSILON)*100)/100;c=Math.round((c+Number.EPSILON)*100)/100;
+  $("totalDebit").textContent=d.toFixed(2);$("totalCredit").textContent=c.toFixed(2);
+  const balanced=d>0&&Math.abs(d-c)<0.001;
+  $("balanceState").textContent=balanced?"Balanced":"Not Balanced";
+  $("balanceState").className=balanced?"balance":"balance unbalanced";
+  $("saveAndPost").disabled=!balanced;
+  return {d,c,balanced};
+}
+function collectPayload(){
+  const totals=calculateTotals();
+  if(!selectedYear())throw Error("Select a fiscal year.");
+  if(!selectedPeriod())throw Error("Select a fiscal period.");
+  if(!$("entryDate").value||!$("postingDate").value)throw Error("Entry date and posting date are required.");
+  if(!$("description").value.trim())throw Error("Description is required.");
+  const lines=[...$("lineRows").children].map(tr=>({
+    account_id:Number(tr.querySelector(".account-select").value),
+    line_description:tr.querySelector(".line-description").value.trim()||null,
+    debit:numeric(tr.querySelector(".debit").value),
+    credit:numeric(tr.querySelector(".credit").value),
+    cost_center:tr.querySelector(".cost-center").value.trim()||null
+  }));
+  if(lines.some(x=>!x.account_id))throw Error("Select an account for every journal line.");
+  if(lines.some(x=>(x.debit>0&&x.credit>0)||(x.debit===0&&x.credit===0)))throw Error("Each line must have either debit or credit, not both.");
+  if(!totals.balanced)throw Error("Total debit and credit must be equal and greater than zero.");
+  return {
+    company_id:companyId(),fiscal_year_id:selectedYear(),fiscal_period_id:selectedPeriod(),
+    entry_date:$("entryDate").value,posting_date:$("postingDate").value,
+    currency:$("currency").value,reference_number:$("reference").value.trim()||null,
+    description:$("description").value.trim(),created_by:$("createdBy").value.trim()||null,lines
+  };
+}
+async function saveDraft(postAfter=false){
+  try{
+    const payload=collectPayload(),id=$("entryId").value;
+    const saved=await request(id?`${API}/${id}`:`${API}/`,{
+      method:id?"PUT":"POST",body:JSON.stringify(payload)
+    });
+    $("entryId").value=saved.id;
+    if(postAfter){
+      const posted=await request(`${API}/${saved.id}/post?posted_by=${encodeURIComponent($("createdBy").value.trim())}`,{method:"POST"});
+      showMessage(`Journal entry ${posted.entry_number} posted successfully.`,true);
+      resetForm();
+    }else{
+      showMessage(`Journal entry ${saved.entry_number} saved as Draft.`,true);
+      resetForm();
+    }
+    await loadEntries();
+  }catch(e){showMessage(e.message)}
+}
+function resetForm(){
+  $("entryId").value="";$("entryDate").value=today;$("postingDate").value=today;
+  $("currency").value="INR";$("reference").value="";$("description").value="";
+  $("createdBy").value="";$("lineRows").innerHTML="";
+  addLine();addLine();calculateTotals();
+}
+async function loadEntries(){
+  try{
+    const id=companyId(),status=$("statusFilter").value,term=$("search").value.trim();
+    const params=new URLSearchParams({company_id:id});
+    if(status)params.set("status",status);if(term)params.set("search",term);
+    entries=await request(`${API}/?${params.toString()}`);
+    renderEntries();
+    const summary=await request(`${API}/summary?company_id=${id}`);
+    $("statTotal").textContent=summary.total_entries||0;
+    $("statDraft").textContent=summary.draft_entries||0;
+    $("statPosted").textContent=summary.posted_entries||0;
+    $("statReversed").textContent=summary.reversed_entries||0;
+  }catch(e){showMessage(e.message)}
+}
+function renderEntries(){
+  $("entries").innerHTML=entries.length?entries.map(x=>`<tr>
+    <td>${esc(x.entry_number||("Draft #"+x.id))}</td><td>${esc(x.entry_date)}</td><td>${esc(x.posting_date)}</td>
+    <td>${esc(x.description)}</td><td>${Number(x.total_debit).toFixed(2)}</td><td>${Number(x.total_credit).toFixed(2)}</td>
+    <td><span class="badge ${esc(x.status)}">${esc(x.status)}</span></td>
+    <td><button class="btn secondary" onclick="viewEntry(${x.id})">View</button>
+    ${x.status==="DRAFT"?`<button class="btn secondary" onclick="editEntry(${x.id})">Edit</button><button class="btn danger" onclick="deleteEntry(${x.id})">Delete</button><button class="btn success" onclick="postEntry(${x.id})">Post</button>`:""}
+    ${x.status==="POSTED"?`<button class="btn danger" onclick="reverseEntry(${x.id})">Reverse</button>`:""}
+    </td></tr>`).join(""):'<tr><td colspan="8">No journal entries found.</td></tr>';
+}
+window.viewEntry=async id=>{
+  try{
+    const x=await request(`${API}/${id}`);
+    $("detailContent").innerHTML=`<p><b>Entry:</b> ${esc(x.entry_number)} &nbsp; <b>Status:</b> ${esc(x.status)}</p>
+    <p style="margin:8px 0 16px"><b>Description:</b> ${esc(x.description)} &nbsp; <b>Reference:</b> ${esc(x.reference_number||"-")}</p>
+    <div class="tablewrap"><table><thead><tr><th>Account</th><th>Description</th><th>Debit</th><th>Credit</th></tr></thead><tbody>
+    ${x.lines.map(l=>`<tr><td>${esc(l.account_code)} - ${esc(l.account_name)}</td><td>${esc(l.line_description||"")}</td><td>${Number(l.debit).toFixed(2)}</td><td>${Number(l.credit).toFixed(2)}</td></tr>`).join("")}
+    </tbody></table></div><p style="margin-top:12px"><b>Total Debit:</b> ${Number(x.total_debit).toFixed(2)} &nbsp; <b>Total Credit:</b> ${Number(x.total_credit).toFixed(2)}</p>`;
+    $("detailModal").style.display="block";
+  }catch(e){showMessage(e.message)}
+};
+window.editEntry=async id=>{
+  try{
+    const x=await request(`${API}/${id}`);
+    if(x.status!=="DRAFT")throw Error("Only Draft entries can be edited.");
+    $("entryId").value=x.id;
+    $("fiscalYear").value=String(x.fiscal_year_id);await loadPeriods();
+    $("fiscalPeriod").value=String(x.fiscal_period_id);
+    $("entryDate").value=x.entry_date;$("postingDate").value=x.posting_date;
+    $("currency").value=x.currency;$("reference").value=x.reference_number||"";
+    $("description").value=x.description;$("createdBy").value=x.created_by||"";
+    $("lineRows").innerHTML="";x.lines.forEach(addLine);calculateTotals();
+    window.scrollTo({top:0,behavior:"smooth"});showMessage("Draft loaded for editing.",true);
+  }catch(e){showMessage(e.message)}
+};
+window.deleteEntry=async id=>{
+  if(!confirm("Delete this Draft journal entry?"))return;
+  try{await request(`${API}/${id}`,{method:"DELETE"});showMessage("Draft deleted.",true);await loadEntries()}catch(e){showMessage(e.message)}
+};
+window.postEntry=async id=>{
+  if(!confirm("Post this journal entry? Posted entries cannot be edited."))return;
+  try{const x=await request(`${API}/${id}/post?posted_by=${encodeURIComponent($("createdBy").value.trim())}`,{method:"POST"});showMessage(`${x.entry_number} posted successfully.`,true);await loadEntries()}catch(e){showMessage(e.message)}
+};
+window.reverseEntry=async id=>{
+  const reason=prompt("Enter the reason for reversal:");
+  if(!reason||reason.trim().length<3)return;
+  try{const x=await request(`${API}/${id}/reverse?reason=${encodeURIComponent(reason.trim())}`,{method:"POST"});showMessage(`Reversal ${x.entry_number} created and posted.`,true);await loadEntries();await loadTrialBalance()}catch(e){showMessage(e.message)}
+};
+async function loadTrialBalance() {
+    try {
+        const data = await request(
+            `${API}/reports/trial-balance?company_id=${companyId()}${
+                selectedYear()
+                    ? "&fiscal_year_id=" + selectedYear()
+                    : ""
+            }`
+        );
+
+        const rows = Array.isArray(data.rows) ? data.rows : [];
+
+        if (rows.length === 0) {
+            $("trialRows").innerHTML =
+                '<tr><td colspan="6">No posted balances found.</td></tr>';
+
+            return;
+        }
+
+        // Calculate account-wise totals
+        const totalDebit = Number(data.total_debit || 0);
+        const totalCredit = Number(data.total_credit || 0);
+
+        const totalNetDebit = rows.reduce(
+            (sum, x) => sum + Number(x.net_debit || 0), 0
+        );
+
+        const totalNetCredit = rows.reduce(
+            (sum, x) => sum + Number(x.net_credit || 0), 0
+        );
+
+        // Display account records
+        const accountRows = rows.map(x => `
+            <tr>
+                <td>${esc(x.account_code)}</td>
+                <td>${esc(x.account_name)}</td>
+                <td>${Number(x.total_debit || 0).toFixed(2)}</td>
+                <td>${Number(x.total_credit || 0).toFixed(2)}</td>
+                <td>${Number(x.net_debit || 0).toFixed(2)}</td>
+                <td>${Number(x.net_credit || 0).toFixed(2)}</td>
+            </tr>
+        `).join("");
+
+        // Display grand total row
+        const totalRow = `
+            <tr class="trial-total-row">
+                <td colspan="2">GRAND TOTAL</td>
+                <td>${totalDebit.toFixed(2)}</td>
+                <td>${totalCredit.toFixed(2)}</td>
+                <td>${totalNetDebit.toFixed(2)}</td>
+                <td>${totalNetCredit.toFixed(2)}</td>
+            </tr>
+        `;
+
+        $("trialRows").innerHTML = accountRows + totalRow;
+
+        // Calculate difference
+        const difference = Math.abs(totalDebit - totalCredit);
+
+        const oldSummary = $("trialSummary");
+        if (oldSummary) oldSummary.remove();
+
+        const summary = document.createElement("div");
+        summary.id = "trialSummary";
+        summary.className = "trial-difference";
+
+        summary.textContent =
+            `Difference: ${difference.toFixed(2)} | ` +
+            (difference < 0.01
+                ? "TRIAL BALANCE MATCHED"
+                : "TRIAL BALANCE NOT MATCHED");
+
+        $("trialRows").closest(".tablewrap")
+            .insertAdjacentElement("afterend", summary);
+
+    } catch (e) {
+        showMessage(e.message);
+    }
+}
+
+$("loadContext").onclick=loadContext;
+$("fiscalYear").onchange=loadPeriods;
+$("addLine").onclick=()=>addLine();
+$("saveDraft").onclick=()=>saveDraft(false);
+$("saveAndPost").onclick=()=>saveDraft(true);
+$("clearForm").onclick=resetForm;
+$("refreshBtn").onclick=async()=>{await loadContext();await loadPeriods()};
+$("searchBtn").onclick=loadEntries;
+$("statusFilter").onchange=loadEntries;
+$("closeModal").onclick=()=>$("detailModal").style.display="none";
+$("detailModal").onclick=e=>{if(e.target===$("detailModal"))$("detailModal").style.display="none"};
+$("loadTrialBalance").onclick=loadTrialBalance;
+addLine();addLine();
+</script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounts Receivable | STACKLY OneERP</title>
+
+    <style>
+        :root {
+            --navy: #17365d;
+            --blue: #1769d2;
+            --background: #f3f6fb;
+            --text: #243447;
+            --muted: #64748b;
+            --border: #dce5f0;
+            --green: #16834a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        header {
+            background: white;
+            padding: 25px 35px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            color: var(--navy);
+            font-size: 30px;
+        }
+
+        header p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .back-button {
+            padding: 12px 18px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--navy);
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 25px 40px;
+        }
+
+        .intro {
+            margin-bottom: 25px;
+        }
+
+        .intro h2 {
+            margin: 0 0 8px;
+            color: var(--navy);
+            font-size: 25px;
+        }
+
+        .intro p {
+            color: var(--muted);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .workflow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            background: #eaf2ff;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            color: var(--navy);
+            font-weight: bold;
+        }
+
+        .arrow {
+            color: var(--blue);
+            font-size: 22px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 4px 15px rgba(23, 54, 93, 0.05);
+            display: flex;
+            flex-direction: column;
+            min-height: 310px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(23, 54, 93, 0.12);
+        }
+
+        .icon {
+            width: 55px;
+            height: 55px;
+            display: grid;
+            place-items: center;
+            background: #e8f1ff;
+            color: var(--blue);
+            border-radius: 12px;
+            font-size: 27px;
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+            font-size: 23px;
+            color: var(--navy);
+        }
+
+        .card p {
+            color: var(--muted);
+            line-height: 1.7;
+            margin: 0 0 22px;
+            flex: 1;
+        }
+
+        .features {
+            padding-left: 20px;
+            margin: 0 0 25px;
+            color: var(--text);
+            line-height: 1.9;
+        }
+
+        .open-button {
+            display: inline-block;
+            padding: 13px 17px;
+            border-radius: 8px;
+            background: var(--blue);
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .open-button:hover {
+            background: var(--navy);
+        }
+
+        .note {
+            margin-top: 28px;
+            padding: 18px;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid var(--border);
+            line-height: 1.7;
+        }
+
+        .note strong {
+            color: var(--navy);
+        }
+
+        @media (max-width: 900px) {
+            .cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 22px;
+            }
+
+            header h1 {
+                font-size: 25px;
+            }
+
+            main {
+                padding: 0 15px 30px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>Accounts Receivable</h1>
+        <p>Manage customers, invoices, incoming payments, and outstanding balances.</p>
+    </div>
+
+    <a class="back-button" href="index.html">
+        ← Back to Home
+    </a>
+</header>
+
+<main>
+
+    <section class="intro">
+        <h2>Accounts Receivable Dashboard</h2>
+        <p>
+            Select a submodule below to manage customer information,
+            create invoices, or record and track customer payments.
+        </p>
+    </section>
+
+    <section class="workflow">
+        <span>Customer</span>
+        <span class="arrow">→</span>
+        <span>Invoice</span>
+        <span class="arrow">→</span>
+        <span>Payment</span>
+        <span class="arrow">→</span>
+        <span>Outstanding Balance</span>
+    </section>
+
+    <section class="cards">
+
+        <!-- CUSTOMERS -->
+        <article class="card">
+            <div class="icon">♙</div>
+
+            <h3>AR Customers</h3>
+
+            <p>
+                Maintain customer master information and manage the
+                customers who purchase goods or services from your company.
+            </p>
+
+            <ul class="features">
+                <li>Create customers</li>
+                <li>View customer records</li>
+                <li>Update customer details</li>
+                <li>Manage customer status</li>
+            </ul>
+
+            <a class="open-button" href="ar_customers.html">
+                Open Customers →
+            </a>
+        </article>
+
+        <!-- INVOICES -->
+        <article class="card">
+            <div class="icon">▤</div>
+
+            <h3>AR Invoices</h3>
+
+            <p>
+                Create customer invoices and track the amounts that
+                customers owe to your company.
+            </p>
+
+            <ul class="features">
+                <li>Create customer invoices</li>
+                <li>View invoice records</li>
+                <li>Review invoice totals</li>
+                <li>Check invoice due dates</li>
+            </ul>
+
+            <a class="open-button" href="ar_invoice.html">
+                Open Invoices →
+            </a>
+        </article>
+
+        <!-- PAYMENTS -->
+        <article class="card">
+            <div class="icon">₹</div>
+
+            <h3>AR Payments</h3>
+
+            <p>
+                Record money received from customers and monitor
+                payment history and outstanding invoice balances.
+            </p>
+
+            <ul class="features">
+                <li>Record customer payments</li>
+                <li>View payment history</li>
+                <li>Track payment status</li>
+                <li>Review outstanding invoices</li>
+            </ul>
+
+            <a class="open-button" href="payments.html">
+                Open Payments →
+            </a>
+        </article>
+
+    </section>
+
+    <section class="note">
+        <strong>Business workflow:</strong>
+        A customer is registered first. An invoice is created for the
+        goods or services sold. When the customer pays, the payment is
+        recorded and the remaining balance is calculated.
+
+        <br><br>
+
+        <strong>Example:</strong>
+        Invoice amount ₹75,000 − payment received ₹25,000
+        = outstanding balance ₹50,000.
+    </section>
+
+</main>
+
+</body>
+</html>

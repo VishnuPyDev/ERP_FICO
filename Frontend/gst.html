@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GST Management | STACKLY OneERP</title>
+<style>
+:root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#142b49;background:#f3f6fb}*{box-sizing:border-box}body{margin:0;padding:22px}.wrap{max-width:1500px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.head h1{margin:0;font-size:30px}.muted{color:#637b99}.panel{background:white;border:1px solid #d8e3f4;border-radius:18px;padding:22px;margin:18px 0;box-shadow:0 4px 15px #183b6508}.row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.stat{background:#f5f8fd;padding:18px;border-radius:14px}.stat b{display:block;font-size:25px;margin-top:8px}.tabs{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}.btn,.tab{border:0;border-radius:11px;padding:12px 17px;background:#e8f0fc;color:#1558a6;font-weight:700;cursor:pointer}.primary,.tab.active{background:#1768df;color:white}.danger{background:#b42318;color:white}label{display:block;font-weight:650;margin:10px 0 7px}input,select,textarea{width:100%;padding:13px;border:1px solid #cbd9ef;border-radius:11px;font:inherit;color:#142b49;background:white}textarea{min-height:75px}table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;padding:12px;border-bottom:1px solid #e5ebf4}th{background:#f5f8fd}.scroll{overflow:auto}.hidden{display:none}.message{padding:12px;border-radius:10px;margin:12px 0;display:none}.ok{background:#e7f7ee;color:#087443}.err{background:#fff0ef;color:#b42318}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.wide{grid-column:span 2}.linebox{border:1px solid #e2eaf5;border-radius:12px;padding:14px;margin:12px 0}.linegrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:9px;align-items:end}.small{font-size:13px}@media(max-width:900px){.row,.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.linegrid{grid-template-columns:1fr 1fr}}@media(max-width:560px){body{padding:10px}.row,.stats{grid-template-columns:1fr}.wide{grid-column:span 1}}
+</style></head><body><main class="wrap">
+<div class="head"><div><h1>GST Management</h1><p class="muted">Manage GST registrations, tax rates, sales, purchases, ITC and return preparation.</p></div>
+<div><label>Company ID</label><input id="companyId" type="number" value="1" min="1" style="width:110px;display:inline-block"><button class="btn primary" onclick="loadAll()">Load Company</button></div></div>
+<div id="msg" class="message"></div>
+<section class="panel"><div class="stats">
+<div class="stat">Sales taxable value<b id="salesVal">₹0.00</b></div><div class="stat">Purchase taxable value<b id="purchaseVal">₹0.00</b></div><div class="stat">Output GST<b id="outputTax">₹0.00</b></div><div class="stat">Indicative net GST<b id="netTax">₹0.00</b></div>
+</div></section>
+<nav class="tabs">
+<button class="tab active" data-tab="dashboard">Dashboard</button><button class="tab" data-tab="invoice">Create Invoice</button><button class="tab" data-tab="register">Invoice Register</button><button class="tab" data-tab="registration">GST Registration</button><button class="tab" data-tab="rates">Tax Rates</button><button class="tab" data-tab="returns">GSTR Reports</button><button class="tab" data-tab="itc">Input Tax Credit</button>
+</nav>
+<section id="dashboard" class="panel"><h2>GST Overview</h2><p class="muted">Figures are based on saved non-cancelled GST documents. Review statutory adjustments before filing.</p><button class="btn" onclick="loadDashboard()">Refresh Dashboard</button><div id="dashDetail"></div></section>
+<section id="invoice" class="panel hidden"><h2>Create Sales / Purchase Document</h2><div class="row">
+<div><label>Direction *</label><select id="direction"><option>SALES</option><option>PURCHASE</option></select></div>
+<div><label>Document Type</label><select id="docType"><option>INVOICE</option><option>CREDIT_NOTE</option><option>DEBIT_NOTE</option></select></div>
+<div><label>GST Registration</label><select id="registrationId"><option value="">Auto / Not selected</option></select></div>
+<div><label>Invoice / Note Number *</label><input id="invoiceNo" placeholder="INV-2026-001"></div>
+<div><label>Invoice Date *</label><input id="invoiceDate" type="date"></div><div><label>Financial Year</label><input id="financialYear" placeholder="2026-27"></div>
+<div><label>Party Name *</label><input id="partyName" placeholder="ABC Traders"></div><div><label>Party GSTIN</label><input id="partyGstin" maxlength="15" placeholder="15-character GSTIN"></div>
+<div><label>Place of Supply State Code *</label><input id="placeState" maxlength="2" placeholder="e.g. 29"></div>
+<div><label>Supply Category</label><select id="supplyCategory"><option>B2B</option><option>B2C</option><option>EXPORT</option><option>SEZ</option><option>DEEMED_EXPORT</option></select></div>
+<div><label>Reverse Charge</label><select id="reverseCharge"><option value="false">No</option><option value="true">Yes</option></select></div>
+<div><label>ITC Eligible (purchase)</label><select id="itcEligible"><option value="true">Yes</option><option value="false">No</option></select></div>
+</div><h3>Invoice Items</h3><div id="lines"></div><div class="actions"><button class="btn" onclick="addLine()">+ Add Item</button><button class="btn primary" onclick="saveInvoice()">Save GST Document</button></div><p class="muted small">CGST/SGST is calculated for intra-state supplies; IGST for inter-state/export/SEZ supplies. Validate place-of-supply rules for your transaction.</p></section>
+<section id="register" class="panel hidden"><h2>GST Invoice Register</h2><div class="row"><div><label>Direction</label><select id="filterDirection"><option value="">All</option><option>SALES</option><option>PURCHASE</option></select></div><div><label>Search</label><input id="searchInvoice" placeholder="Invoice, party, GSTIN"></div></div><div class="actions"><button class="btn primary" onclick="loadInvoices()">Search</button><button class="btn" onclick="location.href=API+'/export/invoices.csv?company_id='+cid()">Export CSV</button></div><div class="scroll"><table><thead><tr><th>Number</th><th>Date</th><th>Direction</th><th>Party</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="invoiceRows"></tbody></table></div></section>
+<section id="registration" class="panel hidden"><h2>GST Registration Master</h2><div class="row">
+<div><label>GSTIN *</label><input id="gstin" maxlength="15" placeholder="15-character GSTIN"></div><div><label>Legal Name *</label><input id="legalName"></div><div><label>Trade Name</label><input id="tradeName"></div><div><label>State Code *</label><input id="stateCode" maxlength="2" placeholder="e.g. 29"></div><div><label>State Name</label><input id="stateName" placeholder="Karnataka"></div><div><label>Registration Type</label><select id="regType"><option>REGULAR</option><option>COMPOSITION</option><option>CASUAL</option><option>SEZ</option><option>ISD</option></select></div><div><label>Effective From</label><input id="effectiveFrom" type="date"></div></div><button class="btn primary" onclick="saveRegistration()">Save Registration</button><div class="scroll"><table><thead><tr><th>GSTIN</th><th>Legal Name</th><th>State</th><th>Type</th><th>Active</th></tr></thead><tbody id="registrationRows"></tbody></table></div></section>
+<section id="rates" class="panel hidden"><h2>GST Tax Rate Master</h2><div class="row"><div><label>Tax Name *</label><input id="taxName" placeholder="Standard GST 18%"></div><div><label>HSN / SAC</label><input id="hsn"></div><div><label>GST Rate % *</label><input id="rate" type="number" min="0" max="100" step=".001" value="18"></div><div><label>Cess Rate %</label><input id="cessRate" type="number" min="0" max="100" step=".001" value="0"></div><div><label>Supply Type</label><select id="supplyType"><option>GOODS</option><option>SERVICES</option></select></div><div><label>Effective From</label><input id="rateFrom" type="date"></div><div><label>Effective To</label><input id="rateTo" type="date"></div></div><button class="btn primary" onclick="saveRate()">Save Tax Rate</button><div class="scroll"><table><thead><tr><th>Name</th><th>HSN/SAC</th><th>Rate</th><th>Cess</th><th>Type</th><th>Effective</th></tr></thead><tbody id="rateRows"></tbody></table></div></section>
+<section id="returns" class="panel hidden"><h2>GSTR-1 / GSTR-3B Preparation Summary</h2><div class="row"><div><label>Tax Period (YYYY-MM)</label><input id="taxPeriod" type="month"></div></div><button class="btn primary" onclick="loadReturns()">Generate Summary</button><div id="returnData"></div><p class="muted small">Preparation only; this does not submit a return to GSTN.</p></section>
+<section id="itc" class="panel hidden"><h2>Input Tax Credit Summary</h2><button class="btn primary" onclick="loadITC()">Refresh ITC</button><div id="itcData"></div><p class="muted small">Eligibility shown is based on the document flag entered by the user; verify statutory conditions, blocked credits, reversals and supplier data.</p></section>
+</main>
+<script>
+const API = 'http://127.0.0.1:8000/api/gst'; let context={}; const $=id=>document.getElementById(id); const cid=()=>$('companyId').value;
+function money(v){return Number(v||0).toLocaleString('en-IN',{style:'currency',currency:'INR'});}
+function msg(t,ok=true){$('msg').style.display='block';$('msg').className='message '+(ok?'ok':'err');$('msg').textContent=t;}
+async function request(url,opts={}){
+  const r = await fetch(url, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(opts.headers || {})
+    }
+  });
+
+  // Read the response body only once. A Response body cannot be read
+  // once as JSON and then again as text.
+  const raw = await r.text();
+  let data = null;
+
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = { detail: raw };
+    }
+  }
+
+  if (!r.ok) {
+    let detail = data?.detail || data?.message || `HTTP ${r.status} ${r.statusText}`;
+    if (Array.isArray(detail)) {
+      detail = detail.map(item => item.msg || JSON.stringify(item)).join('; ');
+    }
+    if (typeof detail !== 'string') detail = JSON.stringify(detail);
+    throw new Error(detail || 'Request failed');
+  }
+
+  return data ?? {};
+}
+function showTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!==id));}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+async function loadAll() {
+    try {
+        msg("Loading company data...", true);
+
+        const companyId = Number(cid());
+
+        if (!companyId || companyId <= 0) {
+            throw new Error("Please enter a valid Company ID.");
+        }
+
+        const data = await request(
+            `${API}/context?company_id=${companyId}`
+        );
+
+        if (!data.company) {
+            throw new Error("Company information was not returned by the API.");
+        }
+
+        // Safely initialize response collections
+        context = {
+            company: data.company,
+            accounts: data.accounts || [],
+            fiscal_years: data.fiscal_years || [],
+            registrations: data.registrations || [],
+            tax_rates: data.tax_rates || []
+        };
+
+        // Populate GST registration dropdown
+        $('registrationId').innerHTML =
+            '<option value="">Auto / Not selected</option>' +
+            context.registrations.map(x =>
+                `<option value="${x.id}">
+                    ${x.gstin} — ${x.state_name || x.state_code}
+                </option>`
+            ).join('');
+
+        // Render registration and tax-rate tables
+        renderMasters();
+
+        // Load dashboard and invoice register
+        await loadDashboard();
+        await loadInvoices();
+
+        msg(
+            `Company ${context.company.company_code} loaded successfully. ` +
+            `${context.accounts.length} accounts, ` +
+            `${context.registrations.length} GST registrations and ` +
+            `${context.tax_rates.length} tax rates found.`,
+            true
+        );
+
+    } catch (error) {
+        console.error("GST Company Loading Error:", error);
+        msg(error.message, false);
+    }
+}
+function renderMasters(){$('registrationRows').innerHTML=(context.registrations||[]).map(x=>`<tr><td>${x.gstin}</td><td>${x.legal_name}</td><td>${x.state_name||x.state_code}</td><td>${x.registration_type}</td><td>${x.is_active?'Yes':'No'}</td></tr>`).join('');$('rateRows').innerHTML=(context.tax_rates||[]).map(x=>`<tr><td>${x.tax_name}</td><td>${x.hsn_sac||''}</td><td>${x.rate}%</td><td>${x.cess_rate}%</td><td>${x.supply_type}</td><td>${x.effective_from||''}</td></tr>`).join('')}
+async function loadDashboard(){try{let d=await request(`${API}/dashboard?company_id=${cid()}`);$('salesVal').textContent=money(d.sales?.taxable);$('purchaseVal').textContent=money(d.purchases?.taxable);$('outputTax').textContent=money(d.output_tax);$('netTax').textContent=money(d.net_tax_before_adjustments);$('dashDetail').innerHTML=`<p>Input GST recorded: <b>${money(d.input_tax_recorded)}</b></p><p class="muted small">${d.note}</p>`}catch(e){msg(e.message,false)}}
+function addLine(){let box=document.createElement('div');box.className='linebox';box.innerHTML=`<div class="linegrid"><div><label>Description</label><input class="desc" placeholder="Laptop / Consulting service"></div><div><label>HSN/SAC</label><input class="hsn"></div><div><label>Quantity</label><input class="qty" type="number" min=".001" step=".001" value="1"></div><div><label>Unit price</label><input class="price" type="number" min="0" step=".01"></div><div><label>GST %</label><input class="gst" type="number" min="0" max="100" step=".001" value="18"></div><div><button class="btn danger" onclick="this.closest('.linebox').remove()">Remove</button></div></div><div class="row"><div><label>Discount</label><input class="discount" type="number" min="0" step=".01" value="0"></div><div><label>Cess %</label><input class="cess" type="number" min="0" max="100" step=".001" value="0"></div><div><label>Unit</label><input class="unit" placeholder="Nos"></div></div>`;$('lines').appendChild(box);}
+async function saveInvoice(){try{let lines=[...document.querySelectorAll('.linebox')].map(b=>({description:b.querySelector('.desc').value,hsn_sac:b.querySelector('.hsn').value||null,quantity:Number(b.querySelector('.qty').value),unit:b.querySelector('.unit').value||null,unit_price:Number(b.querySelector('.price').value),discount:Number(b.querySelector('.discount').value||0),gst_rate:Number(b.querySelector('.gst').value),cess_rate:Number(b.querySelector('.cess').value||0)}));
+let p={company_id:Number(cid()),registration_id:$('registrationId').value?Number($('registrationId').value):null,direction:$('direction').value,doc_type:$('docType').value,invoice_number:$('invoiceNo').value,invoice_date:$('invoiceDate').value,financial_year:$('financialYear').value||null,party_name:$('partyName').value,party_gstin:$('partyGstin').value||null,place_state_code:$('placeState').value,supply_category:$('supplyCategory').value,reverse_charge:$('reverseCharge').value==='true',is_itc_eligible:$('itcEligible').value==='true',lines};
+let d=await request(`${API}/invoices`,{method:'POST',body:JSON.stringify(p)});msg(`Saved ${d.invoice_number}. Taxable ${money(d.taxable_value)}, GST ${money(d.total_tax)}, total ${money(d.invoice_total)}.`);await loadInvoices();await loadDashboard();showTab('register')}catch(e){msg(e.message,false)}}
+async function loadInvoices(){try{let q=new URLSearchParams({company_id:cid()});if($('filterDirection').value)q.set('direction',$('filterDirection').value);if($('searchInvoice').value)q.set('search',$('searchInvoice').value);let rows=await request(`${API}/invoices?${q}`);$('invoiceRows').innerHTML=rows.map(x=>`<tr><td>${x.invoice_number}</td><td>${x.invoice_date}</td><td>${x.direction}</td><td>${x.party_name}</td><td>${money(x.taxable_value)}</td><td>${money(x.cgst)}</td><td>${money(x.sgst)}</td><td>${money(x.igst)}</td><td>${money(x.invoice_total)}</td><td>${x.status}</td><td><button class="btn" onclick="viewInvoice(${x.id})">View</button> <button class="btn" onclick="setStatus(${x.id},'APPROVED')">Approve</button></td></tr>`).join('')||'<tr><td colspan="11">No GST documents found.</td></tr>'}catch(e){msg(e.message,false)}}
+async function viewInvoice(id){try{let d=await request(`${API}/invoices/${id}`);alert(`${d.invoice_number}\n${d.party_name}\nTaxable: ${money(d.taxable_value)}\nCGST: ${money(d.cgst)}\nSGST: ${money(d.sgst)}\nIGST: ${money(d.igst)}\nTotal: ${money(d.invoice_total)}`)}catch(e){msg(e.message,false)}}
+async function setStatus(id,s){try{await request(`${API}/invoices/${id}/status?status=${s}`,{method:'PATCH'});msg(`Document status changed to ${s}`);loadInvoices()}catch(e){msg(e.message,false)}}
+async function saveRegistration(){try{let p={company_id:Number(cid()),gstin:$('gstin').value,legal_name:$('legalName').value,trade_name:$('tradeName').value||null,state_code:$('stateCode').value,state_name:$('stateName').value||null,registration_type:$('regType').value,effective_from:$('effectiveFrom').value||null};await request(`${API}/registrations`,{method:'POST',body:JSON.stringify(p)});msg('GST registration saved');await loadAll()}catch(e){msg(e.message,false)}}
+async function saveRate(){try{let p={company_id:Number(cid()),tax_name:$('taxName').value,hsn_sac:$('hsn').value||null,rate:Number($('rate').value),cess_rate:Number($('cessRate').value||0),supply_type:$('supplyType').value,effective_from:$('rateFrom').value||null,effective_to:$('rateTo').value||null};await request(`${API}/tax-rates`,{method:'POST',body:JSON.stringify(p)});msg('GST tax rate saved');await loadAll()}catch(e){msg(e.message,false)}}
+async function loadReturns(){try{let p=$('taxPeriod').value;if(!p)throw Error('Select a tax period');let d=await request(`${API}/returns/summary?company_id=${cid()}&tax_period=${p}`);$('returnData').innerHTML=`<h3>GSTR-1 Outward Supplies</h3><pre>${JSON.stringify(d.gstr1,null,2)}</pre><h3>GSTR-3B Preparation</h3><pre>${JSON.stringify(d.gstr3b,null,2)}</pre>`}catch(e){msg(e.message,false)}}
+async function loadITC(){try{let d=await request(`${API}/reports/itc?company_id=${cid()}`);$('itcData').innerHTML=`<div class="stats"><div class="stat">Purchase documents<b>${d.documents||0}</b></div><div class="stat">Total input tax<b>${money(d.tax_total)}</b></div><div class="stat">Eligible ITC<b>${money(d.eligible_itc)}</b></div><div class="stat">Ineligible tax<b>${money(d.ineligible_tax)}</b></div></div>`}catch(e){msg(e.message,false)}}
+$('invoiceDate').value=new Date().toISOString().slice(0,10);$('taxPeriod').value=new Date().toISOString().slice(0,7);addLine();loadAll();
+</script></body></html>

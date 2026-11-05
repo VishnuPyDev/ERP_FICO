@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Setup | STACKLY OneERP</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fc;
+            color: #172b49;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: #142946;
+            color: white;
+            padding: 20px 10px;
+        }
+
+        .sidebar-title {
+            margin: 15px 12px;
+            color: #a9c4e8;
+            font-size: 13px;
+            letter-spacing: 2px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 16px 14px;
+            margin: 5px 0;
+            color: white;
+            text-decoration: none;
+            border-radius: 9px;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: #2457a0;
+        }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+            padding: 28px;
+        }
+
+        .page-header,
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+            font-weight: 500;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .muted {
+            color: #647b99;
+            line-height: 1.5;
+        }
+
+        .panel {
+            margin-top: 22px;
+            padding: 24px;
+            background: white;
+            border: 1px solid #d9e3f2;
+            border-radius: 15px;
+            box-shadow: 0 5px 16px #172b4908;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 22px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            color: #526984;
+            font-weight: 600;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            height: 46px;
+            padding: 10px 12px;
+            border: 1px solid #cbd8e9;
+            border-radius: 8px;
+            background: white;
+            font-size: 15px;
+        }
+
+        .btn {
+            padding: 12px 17px;
+            border: 1px solid #d9e3f2;
+            border-radius: 8px;
+            background: #edf3fc;
+            color: #17477f;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn.primary {
+            background: #1769d2;
+            color: white;
+            border-color: #1769d2;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+            flex-wrap: wrap;
+        }
+
+        .notice {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        .notice.success {
+            display: block;
+            color: #167647;
+            background: #eaf8f0;
+        }
+
+        .notice.error {
+            display: block;
+            color: #b42318;
+            background: #fff0ef;
+        }
+
+        .searchbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .searchbar input {
+            min-width: 210px;
+            padding: 10px 12px;
+            border: 1px solid #cbd8e9;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 18px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 850px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 13px 12px;
+            border-bottom: 1px solid #e7edf6;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f7f9fd;
+            color: #506783;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            color: #167647;
+            background: #e8f7ee;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status.inactive {
+            color: #687386;
+            background: #f0f1f4;
+        }
+
+        .small-btn {
+            padding: 7px 9px;
+            margin: 2px;
+            border: 1px solid #d9e3f2;
+            border-radius: 6px;
+            background: #f7f9fd;
+            color: #17477f;
+            cursor: pointer;
+        }
+
+        .empty {
+            padding: 24px;
+            text-align: center;
+            color: #647b99;
+        }
+
+        @media (max-width: 1000px) {
+            .sidebar {
+                width: 210px;
+            }
+
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .layout {
+                display: block;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .main {
+                padding: 15px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            .sidebar,
+            .page-header button,
+            .form-panel,
+            .searchbar,
+            .row-actions,
+            .notice {
+                display: none !important;
+            }
+
+            .main {
+                padding: 0;
+            }
+
+            .panel {
+                box-shadow: none;
+                border: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="layout">
+
+    <!-- ERP SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-title">MAIN MENU</div>
+        <a href="index.html">⌂ &nbsp; Home</a>
+
+        <div class="sidebar-title">FICO MODULES</div>
+        <a href="company.html" class="active">▦ &nbsp; Company</a>
+        <a href="fiscal_year.html">▣ &nbsp; Fiscal Year</a>
+        <a href="fiscal_period.html">▦ &nbsp; Fiscal Period</a>
+        <a href="coa.html">▤ &nbsp; Chart of Accounts</a>
+        <a href="journal_entry.html">▧ &nbsp; Journal Entry</a>
+        <a href="general_ledger.html">▤ &nbsp; General Ledger</a>
+        <a href="trial_balance.html">▦ &nbsp; Trial Balance</a>
+        <a href="accounts_payable.html">▣ &nbsp; Accounts Payable</a>
+        <a href="accounts_receivable.html">♧ &nbsp; Accounts Receivable</a>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+        <header class="page-header">
+            <div>
+                <h1>Company Setup</h1>
+                <p class="muted">
+                    Create and maintain company master data for your ERP FICO modules.
+                </p>
+            </div>
+
+           
+        </header>
+
+        <div id="notice" class="notice" role="status"
+             aria-live="polite"></div>
+
+        <!-- COMPANY FORM -->
+        <section class="panel form-panel">
+            <div class="section-header">
+                <h2 id="formTitle">Create Company</h2>
+                <button class="btn" type="button" id="clearBtn">
+                    Clear Form
+                </button>
+            </div>
+
+            <form id="companyForm">
+                <div class="grid">
+
+                    <div class="field">
+                        <label for="company_code">Company Code *</label>
+                        <input id="company_code" maxlength="20"
+                               placeholder="e.g. COMP001" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="company_name">Company Name *</label>
+                        <input id="company_name" maxlength="150"
+                               placeholder="e.g. ABC Technologies Pvt Ltd"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="country">Country *</label>
+                        <input id="country" maxlength="100"
+                               value="India" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="currency">Base Currency *</label>
+                        <select id="currency" required>
+                            <option value="">Select currency</option>
+                            <option value="INR">INR - Indian Rupee</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="GBP">GBP - British Pound</option>
+                            <option value="AED">AED - UAE Dirham</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="financial_year_start">
+                            Financial Year Start *
+                        </label>
+                        <input id="financial_year_start" type="date"
+                               value="2026-04-01" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="company_address">Company Address</label>
+                        <input id="company_address" maxlength="255"
+                               placeholder="City, state, address">
+                    </div>
+
+                </div>
+
+                <div class="actions">
+                    <button class="btn primary" type="submit" id="saveBtn">
+                        Create Company
+                    </button>
+
+                    <button class="btn" type="button"
+                            id="cancelEditBtn" hidden>
+                        Cancel Edit
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- COMPANY LIST -->
+        <section class="panel">
+            <div class="section-header">
+                <div>
+                    <h2>Companies</h2>
+                    <p class="muted" id="countLabel">Loading companies...</p>
+                </div>
+
+                <div class="searchbar">
+                    <input id="searchInput" type="search"
+                           placeholder="Search code or company name">
+
+                    <button class="btn" type="button" id="searchBtn">
+                        Search
+                    </button>
+
+                    <button class="btn" type="button" id="refreshBtn">
+                        Refresh
+                    </button>
+
+                    <button class="btn" type="button" id="printBtn">
+                        Print
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Company Code</th>
+                        <th>Company Name</th>
+                        <th>Country</th>
+                        <th>Currency</th>
+                        <th>Financial Year Start</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="companyTableBody">
+                    <tr>
+                        <td colspan="7" class="empty">Loading companies...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    // Update this URL only if your backend uses a different host or port.
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const $ = id => document.getElementById(id);
+
+    let companies = [];
+    let editingId = null;
+
+    function showNotice(message, type = "success") {
+        const element = $("notice");
+        element.textContent = message;
+        element.className = "notice " + type;
+    }
+
+    function clearNotice() {
+        $("notice").textContent = "";
+        $("notice").className = "notice";
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[character]);
+    }
+
+    function dateOnly(value) {
+        return value ? String(value).slice(0, 10) : "";
+    }
+
+    async function apiRequest(path, options = {}) {
+        const response = await fetch(API_BASE + path, {
+            ...options,
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            }
+        });
+
+        const raw = await response.text();
+        let data = {};
+
+        try {
+            data = raw ? JSON.parse(raw) : {};
+        } catch {
+            data = { detail: raw };
+        }
+
+        if (!response.ok) {
+            const detail = data.detail;
+            throw new Error(
+                typeof detail === "string"
+                    ? detail
+                    : JSON.stringify(detail || `HTTP ${response.status}`)
+            );
+        }
+
+        return data;
+    }
+
+    function renderCompanies(items) {
+        $("countLabel").textContent =
+            `${items.length} company record(s)`;
+
+        const body = $("companyTableBody");
+
+        if (!items.length) {
+            body.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty">
+                        No companies found. Create your first company above.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        body.innerHTML = items.map(company => {
+            const active =
+                company.is_active === true ||
+                Number(company.is_active) === 1;
+
+            return `
+                <tr>
+                    <td>${escapeHtml(company.company_code)}</td>
+                    <td>${escapeHtml(company.company_name)}</td>
+                    <td>${escapeHtml(company.country)}</td>
+                    <td>${escapeHtml(company.currency)}</td>
+                    <td>${escapeHtml(dateOnly(company.financial_year_start))}</td>
+                    <td>
+                        <span class="status ${active ? "" : "inactive"}">
+                            ${active ? "Active" : "Inactive"}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="row-actions">
+                            <button class="small-btn" type="button"
+                                data-action="edit"
+                                data-id="${Number(company.id)}">
+                                Edit
+                            </button>
+
+                            <button class="small-btn" type="button"
+                                data-action="status"
+                                data-id="${Number(company.id)}"
+                                data-active="${active ? "1" : "0"}">
+                                ${active ? "Deactivate" : "Activate"}
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        }).join("");
+    }
+
+    // Load the list from the backend.
+    async function loadCompanies() {
+        const button = $("refreshBtn");
+        button.disabled = true;
+
+        try {
+            const search = $("searchInput").value.trim();
+            const query = search
+                ? `?search=${encodeURIComponent(search)}`
+                : "";
+
+            const data = await apiRequest(`/companies/${query}`);
+
+            companies = Array.isArray(data.companies)
+                ? data.companies
+                : [];
+
+            renderCompanies(companies);
+            clearNotice();
+
+        } catch (error) {
+            console.error("Company list error:", error);
+
+            $("companyTableBody").innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty">
+                        Unable to load companies. Check the backend and database.
+                    </td>
+                </tr>`;
+
+            $("countLabel").textContent = "Could not load companies";
+            showNotice(error.message, "error");
+
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function resetForm() {
+        editingId = null;
+        $("companyForm").reset();
+
+        $("country").value = "India";
+        $("financial_year_start").value = "2026-04-01";
+
+        $("formTitle").textContent = "Create Company";
+        $("saveBtn").textContent = "Create Company";
+        $("cancelEditBtn").hidden = true;
+
+        clearNotice();
+    }
+
+    function startEdit(id) {
+        const company = companies.find(
+            item => Number(item.id) === Number(id)
+        );
+
+        if (!company) return;
+
+        editingId = Number(id);
+
+        $("company_code").value = company.company_code ?? "";
+        $("company_name").value = company.company_name ?? "";
+        $("country").value = company.country ?? "";
+        $("currency").value = company.currency ?? "";
+        $("financial_year_start").value =
+            dateOnly(company.financial_year_start);
+        $("company_address").value =
+            company.company_address ?? "";
+
+        $("formTitle").textContent = "Update Company";
+        $("saveBtn").textContent = "Save Changes";
+        $("cancelEditBtn").hidden = false;
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // Create or update a company.
+    $("companyForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        clearNotice();
+
+        const payload = {
+            company_code: $("company_code").value.trim().toUpperCase(),
+            company_name: $("company_name").value.trim(),
+            country: $("country").value.trim(),
+            currency: $("currency").value,
+            financial_year_start: $("financial_year_start").value,
+            company_address:
+                $("company_address").value.trim() || null
+        };
+
+        const button = $("saveBtn");
+        button.disabled = true;
+
+        // Store the action before resetForm clears editingId.
+        const wasEditing = editingId !== null;
+
+        try {
+            if (wasEditing) {
+                await apiRequest(`/companies/${editingId}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await apiRequest("/companies/", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            resetForm();
+            await loadCompanies();
+
+            showNotice(
+                wasEditing
+                    ? "Company updated successfully."
+                    : "Company created successfully.",
+                "success"
+            );
+
+        } catch (error) {
+            showNotice(error.message, "error");
+
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    // Handle Edit, Activate, and Deactivate actions.
+    $("companyTableBody").addEventListener("click", async event => {
+        const button = event.target.closest("button[data-action]");
+
+        if (!button) return;
+
+        const id = Number(button.dataset.id);
+
+        if (button.dataset.action === "edit") {
+            startEdit(id);
+            return;
+        }
+
+        if (button.dataset.action === "status") {
+            const currentlyActive = button.dataset.active === "1";
+            const action = currentlyActive ? "deactivate" : "activate";
+
+            if (!confirm(`Are you sure you want to ${action} this company?`)) {
+                return;
+            }
+
+            try {
+                await apiRequest(`/companies/${id}/status`, {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                        is_active: !currentlyActive
+                    })
+                });
+
+                await loadCompanies();
+
+                showNotice(
+                    `Company ${action}d successfully.`,
+                    "success"
+                );
+
+            } catch (error) {
+                showNotice(error.message, "error");
+            }
+        }
+    });
+
+    $("searchBtn").addEventListener("click", loadCompanies);
+
+    $("searchInput").addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            loadCompanies();
+        }
+    });
+
+    $("refreshBtn").addEventListener("click", loadCompanies);
+    $("clearBtn").addEventListener("click", resetForm);
+    $("cancelEditBtn").addEventListener("click", resetForm);
+    $("printBtn").addEventListener("click", () => window.print());
+
+    // Automatically load the company list when the page opens.
+    document.addEventListener("DOMContentLoaded", loadCompanies);
+</script>
+</body>
+</html>

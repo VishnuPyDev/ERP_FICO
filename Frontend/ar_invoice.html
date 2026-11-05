@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AR Invoices | ERP FICO</title>
+<style>
+:root{--navy:#17365d;--blue:#1769d2;--bg:#f3f6fb;--text:#243447;--muted:#64748b;--border:#dce5f0}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text)}header{background:white;border-bottom:1px solid var(--border);padding:22px clamp(18px,4vw,38px);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}h1,h2{margin:0 0 8px;color:var(--navy)}header p{margin:0;color:var(--muted)}a{text-decoration:none}.btn,button{padding:11px 15px;border:1px solid var(--border);border-radius:8px;background:white;color:var(--navy);font-weight:bold;cursor:pointer}.primary{background:var(--blue);color:white;border-color:var(--blue)}main{max-width:1200px;margin:24px auto;padding:0 18px 40px}.panel{background:white;border:1px solid var(--border);border-radius:13px;padding:22px;margin-bottom:20px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.field{display:flex;flex-direction:column;gap:7px}.full{grid-column:1/-1}input,select,textarea{padding:11px;border:1px solid #cbd5e1;border-radius:7px;font:inherit;width:100%;background:white}textarea{min-height:70px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.msg{display:none;padding:12px;margin-top:13px;border-radius:8px;white-space:pre-wrap}.ok{background:#dcfce7;color:#166534}.err{background:#fee2e2;color:#991b1b}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:850px}th,td{text-align:left;padding:11px;border-bottom:1px solid #e2e8f0}th{background:#f4f7fb}.muted{color:var(--muted)}@media(max-width:620px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style></head><body><header><div><h1>Accounts Receivable · Invoices</h1><p>Create customer invoices and review saved invoices.</p></div><a class="btn" href="ar.html">← Back to AR</a></header>
+<a href="ar.html" class="back-to-ar">← Back to AR Features</a>
+<main><section class="panel"><h2>Create Customer Invoice</h2><p class="muted">Create the invoice for an existing customer. Use the invoice ID from the register when recording payments.</p>
+<form id="form"><div class="grid">
+<div class="field">
+    <label for="company_code">Company Code *</label>
+    <input
+        id="company_code"
+        required
+        maxlength="20"
+        value="COMP001"
+        placeholder="Enter company code"
+        autocomplete="off"
+    >
+</div>
+<div class="field">
+    <label for="customer_id">Select Active Customer *</label>
+    <select id="customer_id" required>
+        <option value="">Enter company code first</option>
+    </select>
+    <small class="muted" id="customerHint">
+        Enter a company code to load its active customers.
+    </small>
+</div>
+<div class="field"><label for="invoice_number">Invoice Number *</label><input id="invoice_number" required maxlength="40" placeholder="INV-2026-001"></div>
+<div class="field"><label for="invoice_date">Invoice Date *</label><input id="invoice_date" type="date" required></div>
+<div class="field"><label for="due_date">Due Date *</label><input id="due_date" type="date" required></div>
+<div class="field full">
+    <label for="description">Item Description *</label>
+    <input
+        id="description"
+        type="text"
+        maxlength="255"
+        required
+        placeholder="Consulting Services"
+    >
+</div>
+
+<div class="field">
+    <label for="quantity">Quantity *</label>
+    <input
+        id="quantity"
+        type="number"
+        min="0.001"
+        step="0.001"
+        value="1"
+        required
+    >
+</div>
+
+<div class="field">
+    <label for="unit_price">Unit Price (₹) *</label>
+    <input
+        id="unit_price"
+        type="number"
+        min="0"
+        step="0.01"
+        required
+        placeholder="50000"
+    >
+</div>
+
+<div class="field">
+    <label for="tax_rate">Tax Rate (%)</label>
+    <input
+        id="tax_rate"
+        type="number"
+        min="0"
+        max="100"
+        step="0.01"
+        value="0"
+    >
+</div>
+<div class="field full"><label for="notes">Notes</label><textarea id="notes"></textarea></div>
+</div><div class="actions"><button class="primary" type="submit">Create Invoice</button><button type="button" id="clear">Clear Form</button><button type="button" id="refresh">Refresh Invoices</button></div><div id="message" class="msg" role="status"></div></form></section>
+<section class="panel"><h2>Invoice Register</h2><div class="tablewrap"><table><thead><tr><th>ID</th><th>Company</th><th>Invoice No.</th><th>Customer ID</th><th>Invoice Date</th><th>Due Date</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="10">Enter company code and click Refresh Invoices.</td></tr></tbody></table></div></section></main>
+<script>
+const API="http://127.0.0.1:8000";const $=id=>document.getElementById(id);const now=new Date();const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
+$("invoice_date").value=today;$("due_date").value=today;
+function msg(t,ok=false){$("message").textContent=t;$("message").className="msg "+(ok?"ok":"err");$("message").style.display="block";}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function money(v){return Number(v||0).toLocaleString("en-IN",{style:"currency",currency:"INR"});}
+async function api(path,opt={}){const r=await fetch(API+path,{...opt,headers:{"Content-Type":"application/json",...(opt.headers||{})}});const raw=await r.text();let d={};try{d=raw?JSON.parse(raw):{};}catch{d={detail:raw};}if(!r.ok){const x=d.detail??d;throw new Error(typeof x==="string"?x:JSON.stringify(x));}return d;}
+function list(d){if(Array.isArray(d))return d;for(const k of ["invoices","items","data"])if(Array.isArray(d?.[k]))return d[k];return [];}
+async function load(){const c=$("company_code").value.trim();if(!c){msg("Enter company code before loading invoices.");return;}try{const data=await api("/ar/invoices/?company_code="+encodeURIComponent(c));const rows=list(data);$("rows").innerHTML=rows.length?rows.map(i=>`<tr><td>${esc(i.id)}</td><td>${esc(i.company_code)}</td><td>${esc(i.invoice_number)}</td><td>${esc(i.customer_id)}</td><td>${esc(i.invoice_date)}</td><td>${esc(i.due_date)}</td><td>${money(i.subtotal)}</td><td>${money(i.tax_amount)}</td><td>${money(i.total_amount)}</td><td>${esc(i.status)}</td></tr>`).join(""):'<tr><td colspan="10">No invoices found for this company.</td></tr>';msg(`Loaded ${rows.length} invoice(s).`,true);}catch(e){msg("Could not load invoices: "+e.message);}}
+
+// Load active customers belonging to the entered company.
+let customerLoadRequest = 0;
+
+async function loadCustomers() {
+    const companyCode = $("company_code").value.trim();
+    const select = $("customer_id");
+    const hint = $("customerHint");
+    const requestId = ++customerLoadRequest;
+
+    select.innerHTML = '<option value="">Loading active customers...</option>';
+    select.disabled = true;
+
+    if (!companyCode) {
+        select.innerHTML = '<option value="">Enter company code first</option>';
+        select.disabled = false;
+        hint.textContent = "Enter a company code to load its active customers.";
+        return;
+    }
+
+    try {
+        const data = await api(
+            "/ar/customers/?company_code=" +
+            encodeURIComponent(companyCode) +
+            "&active_only=true"
+        );
+
+        // Ignore an older response if the user has since changed company code.
+        if (requestId !== customerLoadRequest) return;
+
+        const customers = Array.isArray(data.customers)
+            ? data.customers
+            : [];
+
+        select.innerHTML = '<option value="">Select an active customer</option>';
+
+        if (customers.length === 0) {
+            select.innerHTML = '<option value="">No active customers found</option>';
+            hint.textContent = "No active customers were found for " + companyCode + ".";
+            return;
+        }
+
+        customers.forEach(customer => {
+            const option = document.createElement("option");
+            option.value = String(customer.id);
+
+            const name = customer.customer_name || "Unnamed customer";
+            const code = customer.customer_code
+                ? " (" + customer.customer_code + ")"
+                : "";
+
+            option.textContent = name + code + " — ID: " + customer.id;
+            select.appendChild(option);
+        });
+
+        hint.textContent =
+            customers.length + " active customer(s) found for " + companyCode + ".";
+
+    } catch (error) {
+        if (requestId !== customerLoadRequest) return;
+
+        console.error("Could not load active customers:", error);
+        select.innerHTML = '<option value="">Could not load customers</option>';
+        hint.textContent = "Customer loading failed. Check the API and backend.";
+        msg("Could not load customers: " + error.message);
+    } finally {
+        if (requestId === customerLoadRequest) {
+            select.disabled = false;
+        }
+    }
+}
+
+// Load after the user finishes entering/changing the company code.
+// The short delay avoids sending a request for every keystroke.
+let customerLoadTimer;
+$("company_code").addEventListener("input", () => {
+    clearTimeout(customerLoadTimer);
+    customerLoadTimer = setTimeout(loadCustomers, 450);
+});
+$("company_code").addEventListener("change", loadCustomers);
+$("company_code").addEventListener("blur", () => {
+    if ($("company_code").value.trim()) loadCustomers();
+});
+
+
+$("form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const submitButton = $("form").querySelector(
+        'button[type="submit"]'
+    );
+
+    // Get values from the form
+    const companyCode = $("company_code").value.trim();
+    const customerId = Number($("customer_id").value);
+   if (!companyCode) {
+    msg("Please enter company code.");
+    return;
+}
+
+if (!customerId || !Number.isInteger(customerId)) {
+    msg("Please select a customer from the dropdown.");
+    return;
+}
+    const invoiceNumber = $("invoice_number").value.trim();
+    const invoiceDate = $("invoice_date").value;
+    const dueDate = $("due_date").value;
+    const description = $("description").value.trim();
+    const quantity = Number($("quantity").value);
+    const unitPrice = Number($("unit_price").value);
+    const taxRate = Number($("tax_rate").value || 0);
+    const notes = $("notes").value.trim();
+
+    // Validate the required fields
+    if (!companyCode) {
+        msg("Please enter the company code.");
+        return;
+    }
+
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+        msg("Please select an active customer.");
+        return;
+    }
+
+    if (!invoiceNumber) {
+        msg("Please enter the invoice number.");
+        return;
+    }
+
+    if (!invoiceDate || !description) {
+        msg("Please enter the invoice date and item description.");
+        return;
+    }
+
+    if (dueDate && dueDate < invoiceDate) {
+        msg("Due date cannot be earlier than invoice date.");
+        return;
+    }
+
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+        msg("Quantity must be greater than zero.");
+        return;
+    }
+
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+        msg("Unit price cannot be negative.");
+        return;
+    }
+
+    if (
+        !Number.isFinite(taxRate) ||
+        taxRate < 0 ||
+        taxRate > 100
+    ) {
+        msg("Tax rate must be between 0 and 100.");
+        return;
+    }
+
+    // Build the payload expected by the FastAPI backend
+    const payload = {
+        company_code: companyCode,
+        customer_id: customerId,
+        invoice_number: invoiceNumber,
+        invoice_date: invoiceDate,
+        due_date: dueDate || null,
+        notes: notes || null,
+
+        lines: [
+            {
+                description: description,
+                quantity: quantity,
+                unit_price: unitPrice,
+                tax_rate: taxRate
+            }
+        ]
+    };
+
+    // Prevent duplicate submissions while processing
+    submitButton.disabled = true;
+    submitButton.textContent = "Creating Invoice...";
+
+    try {
+        msg("Submitting invoice to the backend...", true);
+
+        // Create invoice
+        const result = await api("/ar/invoices/", {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+
+        // Display success message
+        msg(
+            "Invoice created successfully!\n" +
+            "Invoice ID: " + result.invoice_id + "\n" +
+            "Invoice Number: " + result.invoice_number + "\n" +
+            "Status: " + result.status + "\n" +
+            "Subtotal: " + money(result.subtotal) + "\n" +
+            "Tax: " + money(result.tax_amount) + "\n" +
+            "Total: " + money(result.total_amount),
+            true
+        );
+
+        // Refresh the invoice register
+        try {
+            const data = await api(
+                "/ar/invoices/?company_code=" +
+                encodeURIComponent(companyCode)
+            );
+
+            const invoices = list(data);
+
+            $("rows").innerHTML = invoices.length
+                ? invoices.map(i => `
+                    <tr>
+                        <td>${esc(i.id)}</td>
+                        <td>${esc(i.company_code)}</td>
+                        <td>${esc(i.invoice_number)}</td>
+                        <td>${esc(i.customer_id)}</td>
+                        <td>${esc(i.invoice_date)}</td>
+                        <td>${esc(i.due_date)}</td>
+                        <td>${money(i.subtotal)}</td>
+                        <td>${money(i.tax_amount)}</td>
+                        <td>${money(i.total_amount)}</td>
+                        <td>${esc(i.status)}</td>
+                    </tr>
+                `).join("")
+                : '<tr><td colspan="10">No invoices found.</td></tr>';
+
+        } catch (refreshError) {
+            console.error("Invoice register refresh error:", refreshError);
+
+            msg(
+                "Invoice created successfully, but the invoice register " +
+                "could not refresh. Click Refresh Invoices to try again.",
+                true
+            );
+        }
+
+    } catch (error) {
+        console.error("Invoice creation error:", error);
+
+        msg(
+            "Invoice creation failed.\n" +
+            error.message +
+            "\nCheck the customer ID, company code, and backend terminal."
+        );
+
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Create Invoice";
+    }
+});
+$("refresh").addEventListener("click",load);$("clear").addEventListener("click",()=>{$("form").reset();$("invoice_date").value=today;$("due_date").value=today;$("message").style.display="none";});
+
+// The page starts with COMP001 prefilled; load its active customers on opening.
+if ($("company_code").value.trim()) loadCustomers();
+</script></body></html>

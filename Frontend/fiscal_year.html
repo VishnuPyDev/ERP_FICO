@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fiscal Year | STACKLY OneERP</title><style>
+:root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#142b49;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1400px;margin:auto;padding:28px}.head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:22px}h1{margin:0 0 7px;font-size:30px}p{margin:0;color:#647894}.card{background:#fff;border:1px solid #dce5f2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px #173a6508}.grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:7px}.field label{font-size:13px;font-weight:650;color:#425873}input,select,textarea{width:100%;padding:11px 12px;border:1px solid #d5dfed;border-radius:8px;font:inherit;background:white;color:#142b49}textarea{min-height:42px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.btn{border:0;border-radius:8px;padding:10px 15px;font-weight:650;cursor:pointer;background:#1769df;color:white}.btn.secondary{background:#e8f0fc;color:#1b5eaf}.btn.danger{background:#fff0f0;color:#b42318}.btn:disabled{opacity:.5;cursor:not-allowed}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:800px}th,td{text-align:left;padding:12px;border-bottom:1px solid #e8edf5;font-size:13px}th{background:#f7f9fd;color:#526782;white-space:nowrap}.badge{display:inline-block;padding:5px 9px;border-radius:99px;background:#e8f0fc;color:#225caa;font-size:12px;font-weight:650}.muted{font-size:12px;color:#6c7f98}.msg{margin-top:12px;padding:11px 13px;border-radius:8px;display:none}.msg.ok{display:block;background:#e8f8ef;color:#17683a}.msg.err{display:block;background:#fff0f0;color:#a32626}.toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.toolbar .field{min-width:160px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:#f7f9fd;border-radius:10px;padding:15px}.stat strong{display:block;font-size:23px;margin-top:8px}@media(max-width:800px){.wrap{padding:15px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:1fr}}@media(max-width:500px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body><main class="wrap">
+<div class="head"><div><h1>Fiscal Year Management</h1><p>Create and manage company financial years and generate periods.</p></div><div class="actions"><button class="btn secondary" id="refresh">↻ Refresh</button></div></div>
+<section class="card"><div class="toolbar"><div class="field"><label for="companyId">Company ID</label><input id="companyId" type="number" min="1" value="1" required></div><button class="btn" id="load">Load Fiscal Years</button><span class="muted">Use an existing numeric company ID.</span></div><div id="message" class="msg" role="status"></div></section>
+<section class="card"><h2 id="formTitle" style="margin-top:0">Create Fiscal Year</h2><form id="yearForm">
+<input type="hidden" id="recordId">
+<div class="grid">
+<div class="field"><label for="yearCode">Year Code *</label><input id="yearCode" maxlength="30" placeholder="FY2026" required></div>
+<div class="field"><label for="yearName">Year Name *</label><input id="yearName" maxlength="100" placeholder="Financial Year 2026-27" required></div>
+<div class="field"><label for="startDate">Start Date *</label><input id="startDate" type="date" required></div>
+<div class="field"><label for="endDate">End Date *</label><input id="endDate" type="date" required></div>
+<div class="field"><label for="yearStatus">Status</label><select id="yearStatus"><option>Draft</option><option>Open</option><option>Closed</option></select></div>
+<div class="field"><label for="isCurrent">Current Fiscal Year?</label><select id="isCurrent"><option value="false">No</option><option value="true">Yes</option></select></div>
+<div class="field" style="grid-column:span 2"><label for="notes">Notes</label><input id="notes" maxlength="500" placeholder="Optional notes"></div>
+</div><div class="actions"><button class="btn" type="submit" id="saveBtn">Save Fiscal Year</button><button class="btn secondary" type="button" id="cancelEdit" hidden>Cancel Edit</button></div>
+</form></section>
+<section class="card"><div class="head"><div><h2>Fiscal Years</h2><p>Search, edit, and generate monthly fiscal periods.</p></div><div class="field" style="min-width:220px"><label for="search">Search</label><input id="search" placeholder="Code or year name"></div></div>
+<div class="stats"><div class="stat">Total Fiscal Years<strong id="total">0</strong></div><div class="stat">Open Fiscal Years<strong id="openCount">0</strong></div><div class="stat">Current Fiscal Year<strong id="currentYear">None</strong></div></div><div class="tablewrap" style="margin-top:16px"><table><thead><tr><th>Code</th><th>Name</th><th>Start</th><th>End</th><th>Status</th><th>Current</th><th>Actions</th></tr></thead><tbody id="rows"><tr><td colspan="7">Load company data to begin.</td></tr></tbody></table></div></section>
+</main>
+<script>
+const API="http://127.0.0.1:8000/api/fiscal"; const $=id=>document.getElementById(id); let years=[];
+function companyId(){const n=Number($("companyId").value);if(!Number.isInteger(n)||n<=0)throw Error("Enter a valid existing Company ID.");return n}
+function msg(text,ok=false){$("message").textContent=text;$("message").className="msg "+(ok?"ok":"err")}
+async function request(url, options = {}) {
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        }
+    });
+
+    const responseText = await response.text();
+
+    let data = null;
+
+    try {
+        data = responseText ? JSON.parse(responseText) : null;
+    } catch {
+        data = responseText;
+    }
+
+    if (!response.ok) {
+        console.error("API Error:", {
+            url,
+            status: response.status,
+            response: data
+        });
+
+        const errorMessage =
+            typeof data === "object"
+                ? data?.detail || JSON.stringify(data)
+                : data || `Request failed (${response.status})`;
+
+        throw new Error(errorMessage);
+    }
+
+    return data;
+}
+async function load(){try{const id=companyId();years=await request(`${API}/years?company_id=${id}`);render();msg("Fiscal years loaded.",true)}catch(e){msg(e.message)}}
+function render(){const term=$("search").value.toLowerCase();const list=years.filter(y=>(y.year_code+" "+y.year_name).toLowerCase().includes(term));$("rows").innerHTML=list.length?list.map(y=>`<tr><td>${esc(y.year_code)}</td><td>${esc(y.year_name)}</td><td>${y.start_date}</td><td>${y.end_date}</td><td><span class="badge">${esc(y.status)}</span></td><td>${y.is_current?"Yes":"No"}</td><td><button
+    class="btn secondary"
+    type="button"
+    onclick="window.editYear(${Number(y.id)})">
+    Edit
+</button>
+<button class="btn" onclick="generate(${y.id})">Generate Periods</button></td></tr>`).join(""):'<tr><td colspan="7">No fiscal years found.</td></tr>';$("total").textContent=years.length;$("openCount").textContent=years.filter(y=>y.status==="Open").length;$("currentYear").textContent=(years.find(y=>y.is_current)||{}).year_name||"None"}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+window.editYear=id=>{const y=years.find(a=>a.id===id);if(!y)return;$("recordId").value=id;$("yearCode").value=y.year_code;$("yearName").value=y.year_name;$("startDate").value=y.start_date;$("endDate").value=y.end_date;$("yearStatus").value=y.status;$("isCurrent").value=String(Boolean(y.is_current));$("notes").value=y.notes||"";$("formTitle").textContent="Edit Fiscal Year";$("saveBtn").textContent="Update Fiscal Year";$("cancelEdit").hidden=false;window.scrollTo({top:0,behavior:"smooth"})}
+function resetForm(){$("yearForm").reset();$("recordId").value="";$("formTitle").textContent="Create Fiscal Year";$("saveBtn").textContent="Save Fiscal Year";$("cancelEdit").hidden=true}
+$("yearForm").addEventListener("submit",async e=>{e.preventDefault();try{const body={company_id:companyId(),year_code:$("yearCode").value.trim(),year_name:$("yearName").value.trim(),start_date:$("startDate").value,end_date:$("endDate").value,status:$("yearStatus").value,is_current:$("isCurrent").value==="true",notes:$("notes").value.trim()||null};if(body.end_date<body.start_date)throw Error("End date must be on or after start date.");const id=$("recordId").value;await request(id?`${API}/years/${id}`:`${API}/years`,{method:id?"PUT":"POST",body:JSON.stringify(body)});msg(id?"Fiscal year updated.":"Fiscal year created.",true);resetForm();await load()}catch(e){msg(e.message)}});
+window.generate=async id=>{if(!confirm("Generate monthly periods for this fiscal year? Existing period numbers will be skipped."))return;try{const r=await request(`${API}/years/${id}/generate-periods`,{method:"POST"});msg(`Created ${r.created_count} period(s).`,true)}catch(e){msg(e.message)}};
+$("load").onclick=load;$("refresh").onclick=load;$("search").oninput=render;$("cancelEdit").onclick=resetForm;
+load();
+</script></body></html>

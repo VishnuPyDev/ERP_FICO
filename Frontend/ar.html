@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Accounts Receivable | STACKLY OneERP</title>
+<style>
+:root{--navy:#17365d;--blue:#1769d2;--bg:#f3f6fb;--text:#243447;--muted:#64748b;--border:#dce5f0;--green:#15803d}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#fff;border-bottom:1px solid var(--border);padding:24px clamp(18px,4vw,42px);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+h1{margin:0 0 7px;color:var(--navy)}header p{margin:0;color:var(--muted)}a{text-decoration:none}
+.back,.btn{display:inline-block;padding:11px 15px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--navy);font-weight:700}
+main{max-width:1200px;margin:25px auto;padding:0 18px 40px}.panel,.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:23px;box-shadow:0 4px 15px #17365d0a}
+h2{margin:0 0 10px;color:var(--navy)}.muted{color:var(--muted);line-height:1.55}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.step{background:#f8fbff;border:1px solid var(--border);border-radius:11px;padding:17px;text-align:center}.step b{display:block;color:var(--navy);margin-bottom:7px}.step span{font-size:14px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:20px}.card{display:flex;flex-direction:column;min-height:230px}.icon{width:46px;height:46px;display:grid;place-items:center;background:#e8f1ff;color:var(--blue);border-radius:12px;font-size:23px}.card h3{color:var(--navy);margin:15px 0 8px}.card p{color:var(--muted);line-height:1.5;flex:1}.open{align-self:flex-start;background:var(--blue);color:white;padding:11px 14px;border-radius:8px;font-weight:bold}
+.definitions{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.definitions div{padding:16px;background:#f8fafc;border:1px solid var(--border);border-radius:10px}
+@media(max-width:760px){.cards,.flow{grid-template-columns:1fr 1fr}}@media(max-width:520px){.cards,.flow,.definitions{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><div><h1>Accounts Receivable (AR)</h1><p>Manage customers, customer invoices, receipts, and outstanding balances.</p></div><a class="back" href="index.html">← Back to ERP Dashboard</a></header>
+<main>
+<section class="cards">
+<article class="card"><div class="icon">♙</div><h3>Customers</h3><p>Create, view, update, and deactivate customer master records, including contact details, payment terms, and credit limits.</p><a class="open" href="ar_customers.html">Open Customers →</a></article>
+<article class="card"><div class="icon">▤</div><h3>Invoices</h3><p>Create invoices for existing customers and view the invoice register, dates, totals, and invoice status.</p><a class="open" href="ar_invoice.html">Open Invoices →</a></article>
+<article class="card"><div class="icon">₹</div><h3>Payments</h3><p>Record payments against invoices, review payment history, track balances, and identify outstanding invoices.</p><a class="open" href="payments.html">Open Payments →</a></article>
+</section>
+</main></body></html>

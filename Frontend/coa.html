@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STACKLY OneERP | Chart of Accounts</title>
+  <style>
+    :root { --navy:#142b4e; --blue:#1769d2; --bg:#f4f7fb; --border:#dfe7f1; --text:#1d2d46; --muted:#64748b; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); }
+    header { background:#fff; border-bottom:1px solid var(--border); padding:18px 24px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+    .brand { color:var(--navy); font-size:20px; font-weight:800; }
+    .subbrand { color:var(--muted); font-size:12px; margin-top:4px; }
+    .header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    input, select, textarea, button { font:inherit; }
+    input, select, textarea { padding:10px 11px; border:1px solid #ccd7e5; border-radius:7px; background:#fff; width:100%; }
+    button { border:0; border-radius:7px; padding:10px 14px; background:var(--blue); color:white; cursor:pointer; font-weight:700; }
+    button.secondary { background:#eaf1fb; color:#174a8b; border:1px solid #d5e2f4; }
+    button.danger { background:#b42318; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .layout { display:grid; grid-template-columns:220px minmax(0,1fr); min-height:calc(100vh - 70px); }
+    aside { background:var(--navy); color:#fff; padding:22px 14px; }
+    aside h3 { font-size:12px; text-transform:uppercase; letter-spacing:1px; opacity:.7; margin:0 10px 15px; }
+    aside a { display:block; color:#e5edf8; text-decoration:none; padding:11px 12px; border-radius:7px; margin:4px 0; font-size:14px; }
+    aside a.active, aside a:hover { background:#244a7e; }
+    main { padding:26px; min-width:0; }
+    .title-row { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:20px; }
+    h1 { margin:0; font-size:26px; }
+    .subtitle { color:var(--muted); margin-top:7px; font-size:14px; }
+    .toolbar { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+    .toolbar input { width:160px; }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+    .card, .panel { background:#fff; border:1px solid var(--border); border-radius:11px; box-shadow:0 3px 12px #172b4d08; }
+    .card { padding:17px; }
+    .card-label { font-size:13px; color:var(--muted); }
+    .card-value { font-size:25px; font-weight:800; margin-top:10px; }
+    .panel { padding:19px; margin-bottom:18px; }
+    .panel h2 { font-size:17px; margin:0 0 15px; }
+    .form-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
+    label { display:block; font-size:12px; color:#52627a; font-weight:700; margin-bottom:6px; }
+    .field { min-width:0; }
+    textarea { resize:vertical; min-height:42px; }
+    .form-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:15px; }
+    .table-wrap { overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th, td { padding:12px 10px; text-align:left; border-bottom:1px solid #e8edf4; font-size:13px; }
+    th { background:#f7f9fc; color:#52627a; font-size:12px; white-space:nowrap; }
+    .badge { display:inline-block; padding:5px 8px; border-radius:20px; background:#e8f7ef; color:#18794e; font-size:11px; font-weight:700; }
+    .badge.inactive { background:#fce8e6; color:#b42318; }
+    .message { display:none; padding:11px 13px; border-radius:7px; margin:0 0 15px; font-size:13px; white-space:pre-wrap; }
+    .message.show { display:block; }
+    .message.info { background:#eaf3ff; color:#174a8b; }
+    .message.success { background:#e7f7ee; color:#176b43; }
+    .message.error { background:#fff0ef; color:#a32118; }
+    .empty { color:var(--muted); padding:22px; text-align:center; }
+    .small { color:var(--muted); font-size:12px; line-height:1.5; }
+    @media(max-width:900px) { .layout{grid-template-columns:1fr} aside{padding:12px;display:flex;gap:5px;flex-wrap:wrap} aside h3{width:100%;margin:4px 8px} aside a{padding:8px;font-size:12px} main{padding:16px} .cards{grid-template-columns:repeat(2,minmax(0,1fr))} .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+    @media(max-width:560px) { .cards,.form-grid{grid-template-columns:1fr} header{padding:14px} .toolbar input{width:100%} .toolbar{width:100%} .toolbar>*{flex:1} h1{font-size:22px} }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">▦ STACKLY OneERP</div>
+    <div class="subbrand">FICO · Chart of Accounts</div>
+  </div>
+  <div class="header-actions">
+    <input id="companyCode" value="COMP001" maxlength="20" aria-label="Company code" style="width:150px" placeholder="Company code">
+    <button id="loadBtn" type="button">Load Accounts</button>
+    <button id="dashboardBtn" type="button" class="secondary">Dashboard</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <h3>FICO Navigation</h3>
+    <a href="index.html">⌂ Home / Dashboard</a>
+    <a href="coa.html" class="active">▤ Chart of Accounts</a>
+    <a href="payments.html">↗ Accounts Receivable Payments</a>
+  </aside>
+
+  <main>
+    <div class="title-row">
+      <div>
+        <h1>Chart of Accounts</h1>
+        <div class="subtitle">Create, review, and maintain the account hierarchy for a company.</div>
+      </div>
+      <div class="toolbar">
+        <input id="searchInput" placeholder="Search code or name..." aria-label="Search accounts">
+        <button id="refreshBtn" type="button" class="secondary">Refresh</button>
+      </div>
+    </div>
+
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <section class="cards">
+      <div class="card"><div class="card-label">Total Accounts</div><div class="card-value" id="totalCount">—</div></div>
+      <div class="card"><div class="card-label">Active Accounts</div><div class="card-value" id="activeCount">—</div></div>
+      <div class="card"><div class="card-label">Account Types</div><div class="card-value" id="typeCount">—</div></div>
+    </section>
+
+    <section class="panel">
+      <h2 id="formTitle">Add Account</h2>
+      <p class="small">Fields and API payload follow the common CoA structure. If your backend schema uses different required fields, the API will return a validation message below.</p>
+      <form id="accountForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="account_code">Account Code *</label>
+            <input id="account_code" name="account_code" maxlength="20" required placeholder="e.g. 1000">
+          </div>
+          <div class="field">
+            <label for="account_name">Account Name *</label>
+            <input id="account_name" name="account_name" maxlength="100" required placeholder="e.g. Cash">
+          </div>
+          <div class="field">
+            <label for="account_type">Account Type *</label>
+            <select id="account_type" name="account_type" required>
+              <option value="">Select type</option>
+              <option value="ASSET">ASSET</option>
+              <option value="LIABILITY">LIABILITY</option>
+              <option value="EQUITY">EQUITY</option>
+              <option value="REVENUE">REVENUE</option>
+              <option value="EXPENSE">EXPENSE</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="normal_balance">Normal Balance *</label>
+            <select id="normal_balance" name="normal_balance" required>
+              <option value="">Select balance</option>
+              <option value="DEBIT">DEBIT</option>
+              <option value="CREDIT">CREDIT</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="parent_account_id">Parent Account ID (optional)</label>
+            <input id="parent_account_id" name="parent_account_id" type="number" min="1" placeholder="Leave blank for a root account">
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <input id="description" name="description" maxlength="255" placeholder="Optional description">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button id="submitBtn" type="submit">Create Account</button>
+          <button id="cancelEditBtn" type="button" class="secondary" hidden>Cancel Edit</button>
+          <button id="resetBtn" type="reset" class="secondary">Clear Form</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Accounts List</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Account Code</th><th>Account Name</th><th>Type</th><th>Normal Balance</th><th>Parent ID</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="accountsBody"><tr><td colspan="8" class="empty">Loading accounts...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+const $ = id => document.getElementById(id);
+let accounts = [];
+let editingId = null;
+
+function company() { return $("companyCode").value.trim(); }
+function notify(message, kind = "info") {
+  const box = $("message");
+  box.textContent = message;
+  box.className = "message show " + kind;
+}
+async function api(path, options = {}) {
+  const response = await fetch(API_BASE + path, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+  });
+  const raw = await response.text();
+  let data = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch { data = { detail: raw }; }
+  if (!response.ok) {
+    const detail = data.detail;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail || data));
+  }
+  return data;
+}
+function normalizeList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.accounts)) return data.accounts;
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.data)) return data.data;
+  return [];
+}
+async function loadAccounts() {
+  if (!company()) { notify("Enter a company code first.", "error"); return; }
+  notify("Loading accounts from the CoA API...");
+  try {
+    // Existing CoA router uses /chart-of-accounts/ and company_code.
+    const data = await api("/chart-of-accounts/?company_code=" + encodeURIComponent(company()));
+    accounts = normalizeList(data);
+    renderAccounts();
+    notify("Loaded " + accounts.length + " account(s) for " + company() + ".", "success");
+  } catch (error) {
+    notify("Could not load accounts.\n" + error.message + "\nCheck that FastAPI is running, the company code is correct, and the CoA route matches /chart-of-accounts/.", "error");
+  }
+}
+function renderAccounts() {
+  const q = $("searchInput").value.trim().toLowerCase();
+  const visible = accounts.filter(a =>
+    String(a.account_code ?? "").toLowerCase().includes(q) ||
+    String(a.account_name ?? "").toLowerCase().includes(q) ||
+    String(a.account_type ?? "").toLowerCase().includes(q)
+  );
+  $("totalCount").textContent = accounts.length;
+  $("activeCount").textContent = accounts.filter(a => a.is_active === true || a.is_active === 1).length;
+  $("typeCount").textContent = new Set(accounts.map(a => a.account_type).filter(Boolean)).size;
+  const body = $("accountsBody");
+  body.replaceChildren();
+  if (!visible.length) {
+    const row = body.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 8;
+    cell.className = "empty";
+    cell.textContent = accounts.length ? "No accounts match your search." : "No accounts found for this company.";
+    return;
+  }
+  visible.forEach(a => {
+    const row = body.insertRow();
+    [a.id, a.account_code, a.account_name, a.account_type, a.normal_balance, a.parent_account_id ?? "—"].forEach(value => {
+      const cell = row.insertCell();
+      cell.textContent = value ?? "—";
+    });
+    const statusCell = row.insertCell();
+    const badge = document.createElement("span");
+    const active = a.is_active === true || a.is_active === 1;
+    badge.className = "badge" + (active ? "" : " inactive");
+    badge.textContent = active ? "Active" : "Inactive";
+    statusCell.appendChild(badge);
+    const actionCell = row.insertCell();
+    const edit = document.createElement("button");
+    edit.type = "button"; edit.textContent = "Edit"; edit.className = "secondary";
+    edit.style.marginRight = "5px";
+    edit.addEventListener("click", () => startEdit(a));
+    actionCell.appendChild(edit);
+    const deactivate = document.createElement("button");
+    deactivate.type = "button"; deactivate.textContent = "Deactivate"; deactivate.className = "danger";
+    deactivate.disabled = !active;
+    deactivate.addEventListener("click", () => deactivateAccount(a));
+    actionCell.appendChild(deactivate);
+  });
+}
+function startEdit(a) {
+  editingId = a.id;
+  $("account_code").value = a.account_code ?? "";
+  $("account_name").value = a.account_name ?? "";
+  $("account_type").value = a.account_type ?? "";
+  $("normal_balance").value = a.normal_balance ?? "";
+  $("parent_account_id").value = a.parent_account_id ?? "";
+  $("description").value = a.description ?? "";
+  $("formTitle").textContent = "Update Account #" + a.id;
+  $("submitBtn").textContent = "Update Account";
+  $("cancelEditBtn").hidden = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function resetEdit() {
+  editingId = null;
+  $("accountForm").reset();
+  $("formTitle").textContent = "Add Account";
+  $("submitBtn").textContent = "Create Account";
+  $("cancelEditBtn").hidden = true;
+}
+$("accountForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!company()) { notify("Enter a company code first.", "error"); return; }
+  const payload = {
+    company_code: company(),
+    account_code: $("account_code").value.trim(),
+    account_name: $("account_name").value.trim(),
+    account_type: $("account_type").value,
+    normal_balance: $("normal_balance").value,
+    parent_account_id: $("parent_account_id").value ? Number($("parent_account_id").value) : null,
+    description: $("description").value.trim() || null
+  };
+  try {
+    const path = editingId === null
+      ? "/chart-of-accounts/"
+      : "/chart-of-accounts/" + editingId + "?company_code=" + encodeURIComponent(company());
+    const result = await api(path, {
+      method: editingId === null ? "POST" : "PUT",
+      body: JSON.stringify(payload)
+    });
+    notify(editingId === null ? "Account created successfully." : "Account updated successfully.", "success");
+    resetEdit();
+    await loadAccounts();
+  } catch (error) {
+    notify("Save failed.\n" + error.message + "\nIf your backend uses a different update URL or requires different fields, share the error and I will align this page with coa.py.", "error");
+  }
+});
+async function deactivateAccount(a) {
+  if (!confirm("Deactivate account " + a.account_code + " — " + a.account_name + "?")) return;
+  try {
+    // Try common REST patterns; if your router differs, the API error will be shown.
+    await api("/chart-of-accounts/" + a.id + "/deactivate?company_code=" + encodeURIComponent(company()), { method: "PATCH" });
+    notify("Account deactivated.", "success");
+    await loadAccounts();
+  } catch (error) {
+    notify("Could not deactivate this account using PATCH /chart-of-accounts/{id}/deactivate.\n" + error.message + "\nYour backend may not expose a deactivate endpoint; list/create/update can still work.", "error");
+  }
+}
+// Load accounts automatically when the CoA page opens.
+document.addEventListener("DOMContentLoaded", () => {
+  loadAccounts();
+});
+
+$("loadBtn").addEventListener("click", loadAccounts);
+$("refreshBtn").addEventListener("click", loadAccounts);
+$("searchInput").addEventListener("input", renderAccounts);
+$("dashboardBtn").addEventListener("click", () => { window.location.href = "index.html"; });
+$("cancelEditBtn").addEventListener("click", resetEdit);
+$("accountForm").addEventListener("reset", () => {
+  setTimeout(() => {
+    if (editingId !== null) {
+      editingId = null;
+      $("formTitle").textContent = "Add Account";
+      $("submitBtn").textContent = "Create Account";
+      $("cancelEditBtn").hidden = true;
+    }
+  }, 0);
+});
+</script>
+</body>
+</html>

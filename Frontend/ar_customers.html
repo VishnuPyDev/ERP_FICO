@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AR Customers | ERP FICO</title>
+<style>
+:root{--navy:#17365d;--blue:#1769d2;--bg:#f3f6fb;--text:#243447;--muted:#64748b;--border:#dce5f0}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text)}header{background:white;padding:22px clamp(18px,4vw,38px);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--border)}h1,h2{color:var(--navy);margin:0 0 8px}header p{margin:0;color:var(--muted)}a{text-decoration:none}.btn,button{padding:11px 15px;border:1px solid var(--border);border-radius:8px;background:white;color:var(--navy);font-weight:bold;cursor:pointer}.primary{background:var(--blue);border-color:var(--blue);color:white}main{max-width:1200px;margin:24px auto;padding:0 18px 40px}.panel{background:white;border:1px solid var(--border);border-radius:13px;padding:22px;margin-bottom:20px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.field{display:flex;flex-direction:column;gap:7px}.full{grid-column:1/-1}input,textarea{padding:11px;border:1px solid #cbd5e1;border-radius:7px;font:inherit;width:100%}textarea{min-height:70px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.msg{display:none;padding:12px;margin-top:13px;border-radius:8px;white-space:pre-wrap}.ok{background:#dcfce7;color:#166534}.err{background:#fee2e2;color:#991b1b}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:900px}th,td{text-align:left;padding:11px;border-bottom:1px solid #e2e8f0}th{background:#f4f7fb}.muted{color:var(--muted)}@media(max-width:620px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style></head><body>
+<a href="ar.html" class="back-to-ar">← Back to AR Features</a>
+<header><div><h1>Accounts Receivable · Customers</h1><p>Maintain customer master data for invoicing and collections.</p></div><a class="btn" href="ar.html">← Back to AR</a></header>
+<main>
+<section class="panel"><h2 id="formTitle">Create Customer</h2>
+<form id="customerForm"><input type="hidden" id="customer_id">
+<div class="grid">
+<div class="field"><label for="company_code">Company Code *</label><input id="company_code" maxlength="20" required placeholder="STK026"></div>
+<div class="field"><label for="customer_code">Customer Code *</label><input id="customer_code" maxlength="30" required placeholder="CUST-001"></div>
+<div class="field"><label for="customer_name">Customer Name *</label><input id="customer_name" maxlength="150" required></div>
+<div class="field"><label for="email">Email</label><input id="email" type="email" maxlength="150"></div>
+<div class="field"><label for="phone">Phone</label><input id="phone" maxlength="20"></div>
+<div class="field"><label for="payment_terms_days">Payment Terms (days)</label><input id="payment_terms_days" type="number" min="0" max="365" value="30" required></div>
+<div class="field"><label for="credit_limit">Credit Limit (₹)</label><input id="credit_limit" type="number" min="0" step="0.01" value="0"></div>
+<div class="field full"><label for="address">Address</label><textarea id="address"></textarea></div>
+</div><div class="actions"><button class="primary" type="submit" id="saveBtn">Create Customer</button><button type="button" id="clearBtn">Clear Form</button><button type="button" id="loadBtn">Refresh Customers</button></div><div id="message" class="msg" role="status"></div>
+</form></section>
+<section class="panel"><h2>Customer Register</h2><p class="muted">Enter a company code above and refresh to filter customers by company.</p><div class="tablewrap"><table><thead><tr><th>ID</th><th>Company</th><th>Code</th><th>Name</th><th>Email</th><th>Phone</th><th>Terms</th><th>Credit Limit</th><th>Active</th><th>Actions</th></tr></thead><tbody id="rows"><tr><td colspan="10">Click Refresh Customers to load records.</td></tr></tbody></table></div></section>
+</main>
+<script>
+const API="http://127.0.0.1:8000";const $=id=>document.getElementById(id);let customers=[];
+function msg(t,ok=false){$("message").textContent=t;$("message").className="msg "+(ok?"ok":"err");$("message").style.display="block";}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+async function api(path,opt={}){const r=await fetch(API+path,{...opt,headers:{"Content-Type":"application/json",...(opt.headers||{})}});const raw=await r.text();let d={};try{d=raw?JSON.parse(raw):{};}catch{d={detail:raw};}if(!r.ok){let e=d.detail??d;throw new Error(typeof e==="string"?e:JSON.stringify(e));}return d;}
+function list(d){if(Array.isArray(d))return d;for(const k of ["customers","items","data"])if(Array.isArray(d?.[k]))return d[k];return [];}
+function resetForm() {
+    $("customerForm").reset();
+
+    $("customer_id").value = "";
+    $("payment_terms_days").value = 30;
+    $("credit_limit").value = 0;
+
+    $("customer_code").disabled = false;
+
+    $("formTitle").textContent = "Create Customer";
+    $("saveBtn").textContent = "Create Customer";
+}
+async function loadCustomers() {
+    const companyCode = $("company_code").value.trim();
+
+    if (!companyCode) {
+        msg("Enter a company code first.");
+        return;
+    }
+
+    try {
+        const path =
+            "/ar/customers/?company_code=" +
+            encodeURIComponent(companyCode);
+
+        const response = await api(path);
+
+        console.log("Customer API response:", response);
+
+        customers = list(response);
+
+        $("rows").innerHTML = customers.length
+            ? customers.map(customer => `
+                <tr>
+                    <td>${esc(customer.id)}</td>
+                    <td>${esc(customer.company_code)}</td>
+                    <td>${esc(customer.customer_code)}</td>
+                    <td>${esc(customer.customer_name)}</td>
+                    <td>${esc(customer.email)}</td>
+                    <td>${esc(customer.phone)}</td>
+                    <td>${esc(customer.payment_terms_days ?? 30)}</td>
+                    <td>
+                        ${Number(customer.credit_limit || 0).toLocaleString(
+                            "en-IN",
+                            {
+                                style: "currency",
+                                currency: "INR"
+                            }
+                        )}
+                    </td>
+                    <td>
+                        ${
+                            customer.is_active === false ||
+                            customer.is_active === 0
+                                ? "No"
+                                : "Yes"
+                        }
+                    </td>
+                    <td>
+                        <button
+                            type="button"
+                            onclick="editCustomer(${Number(customer.id)})"
+                        >Edit</button>
+
+                        <button
+                            type="button"
+                            onclick="deactivateCustomer(${Number(customer.id)})"
+                        >Deactivate</button>
+                    </td>
+                </tr>
+            `).join("")
+            : `<tr>
+                <td colspan="10">
+                    No active customers found for ${esc(companyCode)}.
+                </td>
+            </tr>`;
+
+        msg(
+            `Loaded ${customers.length} active customer(s) for ${companyCode}.`,
+            true
+        );
+
+    } catch (error) {
+        console.error("Customer loading error:", error);
+
+        msg(
+            "Could not load customers: " + error.message
+        );
+    }
+}
+window.editCustomer = function (id) {
+    const customer = customers.find(
+        item => Number(item.id) === Number(id)
+    );
+
+    if (!customer) {
+        msg("Customer not found in the loaded customer list.");
+        return;
+    }
+
+    const fields = [
+        "company_code",
+        "customer_code",
+        "customer_name",
+        "email",
+        "phone",
+        "payment_terms_days",
+        "credit_limit",
+        "address"
+    ];
+
+    fields.forEach(field => {
+        $(field).value = customer[field] ?? "";
+    });
+
+    $("customer_id").value = customer.id;
+
+    // The current backend does not allow customer_code updates.
+    $("customer_code").disabled = true;
+
+    $("formTitle").textContent =
+        "Update Customer #" + customer.id;
+
+    $("saveBtn").textContent = "Save Changes";
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+};
+window.deactivateCustomer = async function (id) {
+    const companyCode = $("company_code").value.trim();
+
+    if (!companyCode) {
+        msg("Enter a company code first.");
+        return;
+    }
+
+    if (!confirm("Deactivate customer " + id + "?")) {
+        return;
+    }
+
+    try {
+        const path =
+            `/ar/customers/${id}/deactivate` +
+            `?company_code=${encodeURIComponent(companyCode)}`;
+
+        await api(path, {
+            method: "PATCH"
+        });
+
+        msg("Customer deactivated successfully.", true);
+
+        await loadCustomers();
+
+    } catch (error) {
+        msg(
+            "Could not deactivate customer: " + error.message
+        );
+    }
+};
+$("customerForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const id = $("customer_id").value;
+    const companyCode = $("company_code").value.trim();
+
+    const payload = {
+        company_code: companyCode,
+        customer_code: $("customer_code").value.trim(),
+        customer_name: $("customer_name").value.trim(),
+        email: $("email").value.trim() || null,
+        phone: $("phone").value.trim() || null,
+        address: $("address").value.trim() || null,
+        payment_terms_days: Number($("payment_terms_days").value),
+        credit_limit: Number($("credit_limit").value || 0)
+    };
+
+    // Validate required fields.
+    if (!companyCode) {
+        msg("Enter a company code first.");
+        return;
+    }
+
+    if (!payload.customer_code || !payload.customer_name) {
+        msg("Customer code and customer name are required.");
+        return;
+    }
+
+    if (
+        !Number.isFinite(payload.payment_terms_days) ||
+        payload.payment_terms_days < 0 ||
+        payload.payment_terms_days > 365
+    ) {
+        msg("Payment terms must be between 0 and 365 days.");
+        return;
+    }
+
+    if (
+        !Number.isFinite(payload.credit_limit) ||
+        payload.credit_limit < 0
+    ) {
+        msg("Credit limit must be a valid non-negative amount.");
+        return;
+    }
+
+    try {
+        let path;
+        let method;
+
+        if (id) {
+            // Update an existing customer.
+            path =
+                `/ar/customers/${id}` +
+                `?company_code=${encodeURIComponent(companyCode)}`;
+
+            method = "PATCH";
+
+            // The backend does not support changing these fields.
+            delete payload.company_code;
+            delete payload.customer_code;
+        } else {
+            // Create a new customer.
+            path = "/ar/customers/";
+            method = "POST";
+        }
+
+        const result = await api(path, {
+            method: method,
+            body: JSON.stringify(payload)
+        });
+
+        // Preserve the company code before resetting the form.
+        msg(
+            (id
+                ? "Customer updated successfully."
+                : "Customer created successfully.") +
+            "\nCustomer ID: " + result.id,
+            true
+        );
+
+        resetForm();
+
+        // Restore the company code so refreshing works.
+        $("company_code").value = companyCode;
+
+        // Load customers for the same company.
+        await loadCustomers();
+
+        // Keep the success message visible after refreshing.
+        msg(
+            (id
+                ? "Customer updated successfully."
+                : "Customer created successfully.") +
+            "\nCustomer ID: " + result.id,
+            true
+        );
+
+    } catch (error) {
+        console.error("Customer save error:", error);
+
+        msg("Save failed: " + error.message);
+    }
+});
+
+$("loadBtn").addEventListener("click",loadCustomers);$("clearBtn").addEventListener("click",()=>{resetForm();$("message").style.display="none";});
+</script></body></html>

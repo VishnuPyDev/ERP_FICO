@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Financial Reports | ERP FICO</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            color: #243447;
+        }
+
+        header {
+            background: #17365d;
+            color: white;
+            padding: 22px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        header h1 {
+            margin: 0 0 7px;
+        }
+
+        header p {
+            margin: 0;
+            color: #dce7f5;
+        }
+
+        .back-button {
+            color: #17365d;
+            background: white;
+            text-decoration: none;
+            padding: 11px 15px;
+            border-radius: 7px;
+            font-weight: bold;
+        }
+
+        main {
+            max-width: 1250px;
+            margin: 25px auto;
+            padding: 0 18px 40px;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #dce5f0;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #17365d;
+            margin-top: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 7px;
+            padding: 12px 17px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .primary {
+            background: #1769d2;
+            color: white;
+        }
+
+        .secondary {
+            background: #e8eef6;
+            color: #17365d;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .message {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 7px;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            border: 1px solid #dce5f0;
+            border-radius: 10px;
+            padding: 18px;
+            background: #f8fafc;
+        }
+
+        .summary-card span {
+            display: block;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 9px;
+        }
+
+        .summary-card strong {
+            font-size: 22px;
+            color: #17365d;
+            overflow-wrap: anywhere;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #eef3f9;
+            color: #17365d;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .report-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        @media (max-width: 750px) {
+            .form-grid,
+            .summary {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 18px;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            header {
+                background: white;
+                color: black;
+                padding: 0 0 15px;
+            }
+
+            header p {
+                color: black;
+            }
+
+            .back-button,
+            .filter-panel,
+            .no-print {
+                display: none !important;
+            }
+
+            main {
+                margin: 0;
+                padding: 0;
+                max-width: none;
+            }
+
+            .panel {
+                border: none;
+                padding: 0;
+            }
+
+            .summary-card {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>Financial Reports</h1>
+        <p>ERP FICO · Trial Balance · Profit & Loss · Balance Sheet · General Ledger</p>
+    </div>
+
+    <a class="back-button" href="index.html">← Back to Dashboard</a>
+</header>
+
+<main>
+
+    <section class="panel filter-panel">
+        <h2>Generate Financial Report</h2>
+
+        <form id="reportForm">
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label for="company_code">Company Code *</label>
+                    <input
+                        id="company_code"
+                        type="text"
+                        maxlength="20"
+                        placeholder="STK026"
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="report_type">Report Type *</label>
+                    <select id="report_type" required>
+                        <option value="trial-balance">Trial Balance</option>
+                        <option value="profit-loss">Profit &amp; Loss</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="start_date">Start Date *</label>
+                    <input id="start_date" type="date" required>
+                </div>
+
+                <div class="field" id="endDateField">
+                    <label for="end_date">End Date *</label>
+                    <input id="end_date" type="date" required>
+                </div>
+
+                <div class="field" id="accountField" hidden>
+                    <label for="account_id">Account ID (Optional)</label>
+                    <input
+                        id="account_id"
+                        type="number"
+                        min="1"
+                        placeholder="Leave blank for all accounts"
+                    >
+                </div>
+
+            </div>
+
+            <div class="actions">
+                <button class="primary" id="generateButton" type="submit">
+                    Generate Report
+                </button>
+
+                <button class="secondary" id="resetButton" type="button">
+                    Reset
+                </button>
+            </div>
+
+            <div id="message" class="message" role="status"></div>
+
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="report-heading">
+            <div>
+                <h2 id="reportTitle">Trial Balance</h2>
+                <p id="reportPeriod" class="muted">
+                    Select your company and dates to generate a report.
+                </p>
+            </div>
+
+            <button
+                class="secondary no-print"
+                id="printButton"
+                type="button"
+                disabled
+            >
+                Print Report
+            </button>
+        </div>
+
+        <div id="summary" class="summary"></div>
+
+        <div class="table-wrap">
+            <table>
+                <thead id="tableHead">
+                    <tr>
+                        <th>Account Code</th>
+                        <th>Account Name</th>
+                        <th class="right">Debit</th>
+                        <th class="right">Credit</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="4">
+                            Generate a report to view results.
+                        </td>
+                    </tr>
+                </tbody>
+
+                <tfoot id="tableFoot"></tfoot>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+<script>
+    // Change this if your FastAPI server uses a different host or port.
+    const API = "http://127.0.0.1:8000";
+    const $ = id => document.getElementById(id);
+
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    function toDateInputValue(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    $("start_date").value = toDateInputValue(firstDay);
+    $("end_date").value = toDateInputValue(today);
+
+    function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[character]);
+    }
+
+    function money(value) {
+        return Number(value ?? 0).toLocaleString("en-IN", {
+            style: "currency",
+            currency: "INR",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function showMessage(message, type = "error") {
+        $("message").textContent = message;
+        $("message").className = "message " + type;
+        $("message").style.display = "block";
+    }
+
+    function clearMessage() {
+        $("message").textContent = "";
+        $("message").style.display = "none";
+        $("message").className = "message";
+    }
+
+    async function apiGet(path) {
+        const response = await fetch(API + path);
+        const raw = await response.text();
+        let data = {};
+
+        try {
+            data = raw ? JSON.parse(raw) : {};
+        } catch {
+            data = { detail: raw };
+        }
+
+        if (!response.ok) {
+            const detail = data.detail ?? data;
+            throw new Error(
+                typeof detail === "string" ? detail : JSON.stringify(detail)
+            );
+        }
+
+        return data;
+    }
+
+    function summaryCard(label, value, note = "") {
+        return `
+            <div class="summary-card">
+                <span>${escapeHtml(label)}</span>
+                <strong>${escapeHtml(value)}</strong>
+                ${note ? `<p>${escapeHtml(note)}</p>` : ""}
+            </div>
+        `;
+    }
+
+    function setTable(headers, rows, footer = []) {
+        $("tableHead").innerHTML = `<tr>${headers.map(header => `
+            <th class="${header.right ? "right" : ""}">
+                ${escapeHtml(header.label)}
+            </th>
+        `).join("")}</tr>`;
+
+        $("tableBody").innerHTML = rows.length
+            ? rows.map(row => `<tr>${row.map((cell, index) => `
+                <td class="${headers[index]?.right ? "right" : ""}">
+                    ${escapeHtml(cell)}
+                </td>
+            `).join("")}</tr>`).join("")
+            : `<tr><td colspan="${headers.length}">
+                No data found for the selected filters.
+               </td></tr>`;
+
+        $("tableFoot").innerHTML = footer.length
+            ? `<tr>${footer.map((cell, index) => `
+                <th class="${headers[index]?.right ? "right" : ""}">
+                    ${escapeHtml(cell)}
+                </th>
+            `).join("")}</tr>`
+            : "";
+    }
+
+    function renderTrialBalance(data) {
+        $("reportTitle").textContent = data.report || "Trial Balance";
+
+        const balanced = Boolean(data.is_balanced);
+        $("summary").innerHTML =
+            summaryCard("Total Debit", money(data.total_debit)) +
+            summaryCard("Total Credit", money(data.total_credit)) +
+            summaryCard(
+                "Difference",
+                money(data.difference),
+                balanced ? "Debits and credits match" : "Please review the difference"
+            );
+
+        const accounts = Array.isArray(data.accounts) ? data.accounts : [];
+        const rows = accounts.map(account => [
+            account.account_code,
+            account.account_name,
+            account.account_type || "",
+            money(account.debit),
+            money(account.credit)
+        ]);
+
+        setTable(
+            [
+                { label: "Account Code" },
+                { label: "Account Name" },
+                { label: "Account Type" },
+                { label: "Debit", right: true },
+                { label: "Credit", right: true }
+            ],
+            rows,
+            ["", "TOTAL", "", money(data.total_debit), money(data.total_credit)]
+        );
+    }
+
+    function renderProfitLoss(data) {
+        $("reportTitle").textContent = data.report || "Profit & Loss";
+
+        const revenueAccounts = Array.isArray(data.revenue?.accounts)
+            ? data.revenue.accounts : [];
+        const expenseAccounts = Array.isArray(data.expenses?.accounts)
+            ? data.expenses.accounts : [];
+        const totalRevenue = Number(data.revenue?.total ?? 0);
+        const totalExpenses = Number(data.expenses?.total ?? 0);
+        const net = Number(data.net_profit_loss ?? 0);
+        const resultLabel = data.result || (net > 0 ? "PROFIT" : net < 0 ? "LOSS" : "BREAK_EVEN");
+
+        $("summary").innerHTML =
+            summaryCard("Total Revenue", money(totalRevenue)) +
+            summaryCard("Total Expenses", money(totalExpenses)) +
+            summaryCard(net < 0 ? "Net Loss" : "Net Profit", money(Math.abs(net)), resultLabel);
+
+        const rows = [];
+
+        rows.push(["", "REVENUE", "", ""]);
+        revenueAccounts.forEach(account => rows.push([
+            account.account_code, account.account_name, "Revenue", money(account.amount)
+        ]));
+        rows.push(["", "TOTAL REVENUE", "", money(totalRevenue)]);
+        rows.push(["", "", "", ""]);
+        rows.push(["", "EXPENSES", "", ""]);
+        expenseAccounts.forEach(account => rows.push([
+            account.account_code, account.account_name, "Expense", money(account.amount)
+        ]));
+        rows.push(["", "TOTAL EXPENSES", "", money(totalExpenses)]);
+        rows.push(["", net < 0 ? "NET LOSS" : "NET PROFIT", "", money(Math.abs(net))]);
+
+        setTable(
+            [
+                { label: "Account Code" },
+                { label: "Account Name" },
+                { label: "Category" },
+                { label: "Amount", right: true }
+            ],
+            rows
+        );
+    }
+
+    $("reportForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        clearMessage();
+
+        const companyCode = $("company_code").value.trim();
+        const reportType = $("report_type").value;
+        const startDate = $("start_date").value;
+        const endDate = $("end_date").value;
+
+        if (!companyCode || !startDate || !endDate) {
+            showMessage("Please enter the company code and select both dates.");
+            return;
+        }
+
+        if (startDate > endDate) {
+            showMessage("Start date cannot be after end date.");
+            return;
+        }
+
+        const params = new URLSearchParams({
+            company_code: companyCode,
+            start_date: startDate,
+            end_date: endDate
+        });
+
+        const path = `/financial-reports/${reportType}?${params.toString()}`;
+        const button = $("generateButton");
+        button.disabled = true;
+        button.textContent = "Generating...";
+        $("printButton").disabled = true;
+
+        try {
+            showMessage("Generating report...", "success");
+            const data = await apiGet(path);
+
+            if (reportType === "trial-balance") {
+                renderTrialBalance(data);
+            } else if (reportType === "profit-loss") {
+                renderProfitLoss(data);
+            }
+
+            $("reportPeriod").textContent =
+                `Company: ${companyCode} | Period: ${startDate} to ${endDate}`;
+            $("printButton").disabled = false;
+            showMessage("Report generated successfully.", "success");
+        } catch (error) {
+            console.error("Financial report error:", error);
+            showMessage(
+                "Could not generate report. " + error.message +
+                " Check that the backend is running and its CORS settings allow this frontend."
+            );
+        } finally {
+            button.disabled = false;
+            button.textContent = "Generate Report";
+        }
+    });
+
+    $("printButton").addEventListener("click", () => window.print());
+
+    $("resetButton").addEventListener("click", () => {
+        $("reportForm").reset();
+        $("start_date").value = toDateInputValue(firstDay);
+        $("end_date").value = toDateInputValue(today);
+        $("summary").innerHTML = "";
+        $("tableBody").innerHTML =
+            '<tr><td colspan="5">Generate a report to view results.</td></tr>';
+        $("tableFoot").innerHTML = "";
+        $("reportTitle").textContent = "Trial Balance";
+        $("reportPeriod").textContent =
+            "Select your company and dates to generate a report.";
+        $("printButton").disabled = true;
+        clearMessage();
+    });
+</script>
+
+</body>
+</html>

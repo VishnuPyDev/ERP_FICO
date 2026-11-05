@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>General Ledger | STACKLY OneERP</title>
+<style>
+:root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#142b49;background:#f3f6fb}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1500px;margin:auto;padding:26px}
+.head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+h1{margin:0 0 6px;font-size:29px}h2{margin:0 0 14px;font-size:20px}p{margin:0;color:#647894}
+.card{background:#fff;border:1px solid #dce5f2;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px #173a6508}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:7px}.field label{font-size:13px;font-weight:650;color:#425873}
+input,select{width:100%;padding:10px 12px;border:1px solid #d5dfed;border-radius:8px;font:inherit;background:white;color:#142b49}
+.btn{border:0;border-radius:8px;padding:10px 14px;font-weight:650;cursor:pointer;background:#1769df;color:white;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn.secondary{background:#e8f0fc;color:#1b5eaf}.btn:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:14px}
+.msg{display:none;margin-top:12px;padding:11px 13px;border-radius:8px}.msg.ok{display:block;background:#e8f8ef;color:#17683a}.msg.err{display:block;background:#fff0f0;color:#a32626}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f7f9fd;border-radius:10px;padding:14px;color:#647894;font-size:13px}
+.stat strong{display:block;font-size:23px;color:#142b49;margin-top:7px}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1100px}
+th,td{text-align:left;padding:11px;border-bottom:1px solid #e8edf5;font-size:13px;white-space:nowrap}
+th{background:#f7f9fd;color:#526782}.badge{display:inline-block;padding:5px 9px;border-radius:99px;background:#e8f0fc;color:#225caa;font-size:11px;font-weight:700}
+.badge.REVERSED{background:#fff0f0;color:#a32626}.total-row td{font-weight:750;background:#eef4ff;border-top:2px solid #c9d8ee}
+.empty{text-align:center;color:#647894;padding:22px}.small{font-size:12px;color:#647894;margin-top:10px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,1fr)}.wrap{padding:15px}}
+@media(max-width:550px){.grid,.stats{grid-template-columns:1fr}.wrap{padding:10px}}
+@media print{body{background:white}.wrap{max-width:none;padding:0}.no-print{display:none!important}.card{box-shadow:none;border:0;padding:8px}.tablewrap{overflow:visible}table{min-width:0}th,td{font-size:10px;padding:6px}}
+</style></head>
+<body><main class="wrap">
+<div class="head"><div><h1>General Ledger</h1><p>Account-wise view of posted journal transactions and running balances.</p></div>
+<div class="actions no-print" style="margin:0"><button class="btn secondary" id="refreshBtn">↻ Refresh</button></div></div>
+
+<section class="card no-print">
+<h2>Company & Report Filters</h2>
+<div class="grid">
+<div class="field"><label for="companyId">Company ID *</label><input id="companyId" type="number" min="1" value="1"></div>
+<div class="field"><label for="fiscalYear">Fiscal Year</label><select id="fiscalYear"><option value="">All fiscal years</option></select></div>
+<div class="field"><label for="fiscalPeriod">Fiscal Period</label><select id="fiscalPeriod"><option value="">All periods</option></select></div>
+<div class="field"><label for="accountId">Account</label><select id="accountId"><option value="">All accounts</option></select></div>
+<div class="field"><label for="dateFrom">Date From</label><input id="dateFrom" type="date"></div>
+<div class="field"><label for="dateTo">Date To</label><input id="dateTo" type="date"></div>
+<div class="field"><label for="search">Search</label><input id="search" placeholder="Entry number, account, description"></div>
+<div class="field"><label>&nbsp;</label><button class="btn" id="loadReport">Load General Ledger</button></div>
+</div>
+<div class="actions"><button class="btn secondary" id="clearFilters">Clear Filters</button><button class="btn secondary" id="exportCsv">Export CSV</button><button class="btn secondary" id="printReport">Print</button></div>
+<div id="message" class="msg" role="status"></div></section>
+
+<section class="card"><h2>General Ledger Summary</h2>
+<div class="stats">
+<div class="stat">Accounts<strong id="statAccounts">0</strong></div>
+<div class="stat">Journal Entries<strong id="statEntries">0</strong></div>
+<div class="stat">Total Debit<strong id="statDebit">0.00</strong></div>
+<div class="stat">Total Credit<strong id="statCredit">0.00</strong></div>
+</div><div class="small">Only POSTED and REVERSED journal entries are included. DRAFT entries are excluded.</div></section>
+
+<section class="card"><h2>Opening Balances</h2><p>Balances brought forward from posted and reversed transactions before the report start date.</p>
+<div class="tablewrap" style="margin-top:12px"><table style="min-width:700px"><thead><tr><th>Account Code</th><th>Account Name</th><th>Opening Debit</th><th>Opening Credit</th><th>Opening Balance</th><th>Side</th></tr></thead><tbody id="openingRows"><tr><td colspan="6" class="empty">Load General Ledger to view opening balances.</td></tr></tbody></table></div></section>
+
+<section class="card"><div class="head"><div><h2>Account Ledger Transactions</h2><p>Running balance is displayed as debit (DR) or credit (CR).</p></div><div class="small" id="rowCount"></div></div>
+<div class="tablewrap"><table><thead><tr>
+<th>Posting Date</th><th>Entry Number</th><th>Account Code</th><th>Account Name</th><th>Description</th><th>Reference</th><th>Debit</th><th>Credit</th><th>Running Balance</th><th>Status</th>
+</tr></thead><tbody id="ledgerRows"><tr><td colspan="10" class="empty">Load company data to view ledger transactions.</td></tr></tbody><tfoot id="ledgerFoot"></tfoot></table></div>
+<div class="actions no-print"><button class="btn secondary" id="prevPage">Previous</button><span class="small" id="pageInfo">Page 1</span><button class="btn secondary" id="nextPage">Next</button></div>
+</section></main>
+
+<script>
+const API="http://127.0.0.1:8000/api/general-ledger";
+const FISCAL_API="http://127.0.0.1:8000/api/fiscal";
+const $=id=>document.getElementById(id), PAGE_SIZE=200;
+let years=[],periods=[],accounts=[],report=null,offset=0;
+function msg(t,ok=false){$("message").textContent=t;$("message").className="msg "+(ok?"ok":"err")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fmt(v){return Number(v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+async function get(url){const r=await fetch(url);let d;try{d=await r.json()}catch{d=null}if(!r.ok){let e=d?.detail;if(Array.isArray(e))e=e.map(x=>x.msg).join("; ");throw Error(e||`Request failed (${r.status})`)}return d}
+function cid(){const n=Number($("companyId").value);if(!Number.isInteger(n)||n<1)throw Error("Enter a valid existing Company ID.");return n}
+function fy(){return Number($("fiscalYear").value)||0}
+function fp(){return Number($("fiscalPeriod").value)||0}
+function aid(){return Number($("accountId").value)||0}
+async function loadInitial(){
+ try{
+  const id=cid(),[ys,as]=await Promise.all([get(`${FISCAL_API}/years?company_id=${id}`),get(`${API}/accounts?company_id=${id}`)]);
+  years=ys;accounts=as;
+  $("fiscalYear").innerHTML='<option value="">All fiscal years</option>'+years.map(x=>`<option value="${x.id}">${esc(x.year_code)} - ${esc(x.year_name)}</option>`).join("");
+  $("accountId").innerHTML='<option value="">All accounts</option>'+accounts.map(x=>`<option value="${x.id}">${esc(x.account_code)} - ${esc(x.account_name)}</option>`).join("");
+  await loadPeriods();offset=0;await loadReport();
+  msg(`Loaded ${years.length} fiscal year(s) and ${accounts.length} account(s).`,true);
+ }catch(e){msg(e.message)}
+}
+async function loadPeriods(){
+ if(!fy()){$("fiscalPeriod").innerHTML='<option value="">All periods</option>';periods=[];return}
+ periods=await get(`${FISCAL_API}/periods?company_id=${cid()}&fiscal_year_id=${fy()}`);
+ $("fiscalPeriod").innerHTML='<option value="">All periods</option>'+periods.map(x=>`<option value="${x.id}">${esc(x.period_name)} (${esc(x.status)})</option>`).join("");
+}
+function params(paging=true){
+ const p=new URLSearchParams({company_id:String(cid())});
+ if(fy())p.set("fiscal_year_id",fy());if(fp())p.set("fiscal_period_id",fp());if(aid())p.set("account_id",aid());
+ if($("dateFrom").value)p.set("date_from",$("dateFrom").value);if($("dateTo").value)p.set("date_to",$("dateTo").value);
+ if($("search").value.trim())p.set("search",$("search").value.trim());
+ if(paging){p.set("limit",PAGE_SIZE);p.set("offset",offset)}
+ return p;
+}
+async function loadReport(){
+ try{
+  const p=params(true),s=params(false);s.delete("account_id");s.delete("search");
+  const [data,summary]=await Promise.all([get(`${API}/ledger?${p}`),get(`${API}/summary?${s}`)]);
+  report=data;render(data,summary);msg("General Ledger loaded successfully.",true);
+ }catch(e){msg(e.message)}
+}
+function render(data,s){
+ $("statAccounts").textContent=s.account_count||0;$("statEntries").textContent=s.transaction_count||0;
+ $("statDebit").textContent=fmt(s.total_debit);$("statCredit").textContent=fmt(s.total_credit);
+ $("rowCount").textContent=`${data.totals.transaction_count} transaction line(s)`;
+ const accountMap=new Map(accounts.map(a=>[String(a.id),a]));
+ const opening=data.opening_balances||{};
+ const openingKeys=Object.keys(opening);
+ $("openingRows").innerHTML=openingKeys.length?openingKeys.map(id=>{
+   const b=opening[id],a=accountMap.get(String(id))||{};
+   return `<tr><td>${esc(a.account_code||id)}</td><td>${esc(a.account_name||"Account")}</td><td>${fmt(b.debit)}</td><td>${fmt(b.credit)}</td><td>${fmt(b.balance)}</td><td>${esc(b.side)}</td></tr>`;
+ }).join(""):'<tr><td colspan="6" class="empty">No opening balances for the selected report start date.</td></tr>';
+ const rows=data.rows||[];
+ if(!rows.length){$("ledgerRows").innerHTML='<tr><td colspan="10" class="empty">No posted ledger transactions found for the selected filters.</td></tr>';$("ledgerFoot").innerHTML="";}
+ else{
+  $("ledgerRows").innerHTML=rows.map(x=>`<tr>
+  <td>${esc(x.posting_date)}</td><td>${esc(x.entry_number)}</td><td>${esc(x.account_code)}</td><td>${esc(x.account_name)}</td>
+  <td>${esc(x.line_description||x.journal_description)}</td><td>${esc(x.reference_number||"—")}</td>
+  <td>${fmt(x.debit)}</td><td>${fmt(x.credit)}</td><td>${fmt(x.running_balance)} ${x.running_balance_side==="ZERO"?"":x.running_balance_side}</td>
+  <td><span class="badge ${esc(x.journal_status)}">${esc(x.journal_status)}</span></td></tr>`).join("");
+  $("ledgerFoot").innerHTML=`<tr class="total-row"><td colspan="6">CURRENT PAGE TOTAL</td>
+  <td>${fmt(rows.reduce((n,x)=>n+Number(x.debit||0),0))}</td><td>${fmt(rows.reduce((n,x)=>n+Number(x.credit||0),0))}</td><td colspan="2"></td></tr>`;
+ }
+ $("pageInfo").textContent=`Page ${Math.floor(offset/PAGE_SIZE)+1}`;
+ $("prevPage").disabled=offset<=0;$("nextPage").disabled=!data.pagination?.has_more;
+}
+async function exportCsv(){
+ try{
+  const all=[];let pageOffset=0,hasMore=true;
+  while(hasMore){
+   const p=params(false);p.set("limit",2000);p.set("offset",pageOffset);
+   const page=await get(`${API}/ledger?${p}`);
+   all.push(...(page.rows||[]));
+   hasMore=Boolean(page.pagination?.has_more);
+   pageOffset+=2000;
+  }
+  if(!all.length){msg("There are no ledger transactions to export.");return}
+  const header=["Posting Date","Entry Number","Account Code","Account Name","Description","Reference","Debit","Credit","Running Balance","Balance Side","Status"];
+  const lines=all.map(x=>[x.posting_date,x.entry_number,x.account_code,x.account_name,x.line_description||x.journal_description,x.reference_number,x.debit,x.credit,x.running_balance,x.running_balance_side,x.journal_status]);
+  const csv=[header,...lines].map(row=>row.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="STACKLY_General_Ledger.csv";a.click();URL.revokeObjectURL(url);
+  msg(`Exported ${all.length} ledger line(s).`,true);
+ }catch(e){msg(e.message)}
+}
+function clearFilters(){$("fiscalYear").value="";$("fiscalPeriod").innerHTML='<option value="">All periods</option>';$("accountId").value="";$("dateFrom").value="";$("dateTo").value="";$("search").value="";offset=0;loadReport()}
+$("loadReport").onclick=()=>{offset=0;loadReport()};$("refreshBtn").onclick=loadInitial;
+$("fiscalYear").onchange=async()=>{try{await loadPeriods();offset=0;await loadReport()}catch(e){msg(e.message)}};
+$("fiscalPeriod").onchange=()=>{offset=0;loadReport()};$("accountId").onchange=()=>{offset=0;loadReport()};
+$("clearFilters").onclick=clearFilters;$("exportCsv").onclick=exportCsv;$("printReport").onclick=()=>window.print();
+$("prevPage").onclick=()=>{offset=Math.max(0,offset-PAGE_SIZE);loadReport()};$("nextPage").onclick=()=>{offset+=PAGE_SIZE;loadReport()};
+$("companyId").addEventListener("change",loadInitial);loadInitial();
+</script></body></html>

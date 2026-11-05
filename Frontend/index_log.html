@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STACKLY OneERP | FICO Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+:root{--navy:#142846;--blue:#1769df;--ink:#172b4d;--muted:#667894;--line:#e4ebf4;--bg:#f4f7fc}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+.layout{display:flex;min-height:100vh}.sidebar{width:258px;flex-shrink:0;background:linear-gradient(180deg,#142846,#10213b);color:#fff;padding-bottom:24px}
+.brand{padding:23px 19px;border-bottom:1px solid #34445e;font-size:21px;font-weight:700}.brand span{color:#91bdff}
+.nav-heading{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#9aacc6;padding:20px 22px 8px}
+.nav-link{display:block;margin:3px 10px;padding:12px 13px;border-radius:7px;color:#f5f8ff;text-decoration:none;font-size:13px}
+.nav-link:hover,.nav-link.active{background:#2053a0;color:white}.nav-link .ico{display:inline-block;width:27px}
+.main{min-width:0;flex:1}.topbar{height:67px;background:white;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 25px;gap:20px}
+.search{width:min(620px,70%);position:relative;z-index:1001}
+.search input{width:100%;padding:11px 14px;border:1px solid #dce4ef;border-radius:8px;outline-color:var(--blue)}
+.search-results{display:none;position:absolute;top:calc(100% + 9px);left:0;right:0;z-index:2000;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px rgba(20,40,70,.16);max-height:420px;overflow-y:auto;padding:7px}
+.search-results.show{display:block}
+.search-group-label{padding:9px 10px 5px;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.search-result{display:flex;width:100%;align-items:center;gap:10px;padding:10px;border:0;border-radius:8px;background:#fff;color:var(--ink);text-align:left;cursor:pointer}
+.search-result:hover,.search-result:focus,.search-result.active{background:#edf4ff;outline:none}
+.search-result-icon{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border-radius:7px;background:#e6f0ff;color:var(--blue)}
+.search-result-text{min-width:0;flex:1}
+.search-result-title{display:block;font-size:13px;font-weight:600}
+.search-result-description{display:block;margin-top:2px;color:var(--muted);font-size:11px}
+.search-empty{padding:15px 11px;color:var(--muted);font-size:13px}
+.search-match{outline:3px solid #8bb8ff!important;background:#eef5ff!important}
+@media(max-width:600px){.search{width:calc(100% - 112px)}.search-results{max-width:min(90vw,420px)}}
+.user{display:flex;align-items:center;gap:10px;font-size:12px;white-space:nowrap}.avatar{height:38px;width:38px;border-radius:50%;display:grid;place-items:center;background:#1b3769;color:white;font-weight:bold}
+.content{padding:24px}.heading{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}.heading h1{font-size:24px;margin:0 0 7px;font-weight:700}.heading p{font-size:13px;color:var(--muted);margin:0}.btn-refresh{border:1px solid #d6e1f0;border-radius:7px;background:#fff;padding:9px 13px;color:var(--ink)}
+.columns{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:18px;align-items:start}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:18px}
+.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden}.stat{padding:16px;min-height:142px}.stat-icon{height:34px;width:34px;display:grid;place-items:center;border-radius:8px;margin-bottom:11px;font-size:18px}.blue{background:#e4f0ff;color:#1875df}.green{background:#ddf7ec;color:#0b9962}.purple{background:#f0e5ff;color:#8c43dc}.orange{background:#fff0df;color:#df7d18}
+.stat-label{font-size:12px;color:var(--muted)}.stat-value{font-size:25px;font-weight:700;margin:8px 0}.small-link{font-size:11px;color:var(--blue);text-decoration:none}
+.panel{margin-bottom:18px}.panel-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-head h2{font-size:15px;font-weight:700;margin:0}.panel-head a{font-size:11px;color:var(--blue);text-decoration:none}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:600px;font-size:11px}th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #edf1f7}th{background:#f7f9fc}tbody tr:last-child td{border-bottom:0}.badge-status{display:inline-block;padding:5px 9px;border-radius:20px;background:#e6edf7;white-space:nowrap}.posted,.paid{background:#d9f7e8;color:#087b4b}.approved{background:#deecff;color:#135ac0}.pending{background:#fff0d9;color:#9b5a00}
+.modules{padding:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.module{display:flex;gap:9px;padding:12px 10px;min-height:84px;border:1px solid var(--line);border-radius:7px;text-decoration:none;color:var(--ink);transition:.15s}.module:hover{border-color:#7aa9ef;transform:translateY(-2px)}.module-icon{width:32px;height:32px;flex-shrink:0;display:grid;place-items:center;border-radius:7px;background:#e6f0ff}.module strong{display:block;font-size:11px;margin:2px 0 6px}.module small{display:block;color:var(--muted);font-size:10px;line-height:1.45}
+.actions{padding:0 17px}.action{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #edf1f7;color:var(--ink);text-decoration:none;font-size:12px}.action:last-child{border-bottom:0}.action-icon{width:32px;height:32px;border-radius:7px;background:#e5efff;color:#1769df;display:grid;place-items:center;font-size:17px}.arrow{margin-left:auto;color:#8292a9}
+.fin-item{padding:17px;border-bottom:1px solid #edf1f7}.fin-item:last-child{border-bottom:0}.fin-label{font-size:12px;color:var(--muted)}.fin-value{font-size:21px;font-weight:700;margin-top:8px}.hint{font-size:11px;color:var(--muted);padding:0 17px 15px;line-height:1.5}.api-status{font-size:11px;color:var(--muted);margin:0 0 14px}.empty{text-align:center;color:var(--muted);padding:24px}
+@media(max-width:1200px){.columns{grid-template-columns:1fr}.right-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.right-col .panel{margin-bottom:0}}
+@media(max-width:900px){.sidebar{width:210px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.modules{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.sidebar{width:60px}.brand{font-size:0;padding:23px 6px;text-align:center}.brand:after{content:"ERP";font-size:16px}.nav-heading{display:none}.nav-link{font-size:0;text-align:center;padding:13px 5px;margin:5px}.nav-link .ico{font-size:17px;width:auto}.content{padding:14px 10px}.topbar{padding:0 10px}.user-info{display:none}.heading h1{font-size:19px}.right-col{grid-template-columns:1fr}.modules{grid-template-columns:1fr}.stats{gap:8px}.stat{padding:12px}.stat-value{font-size:22px}}
+
+/* Authentication */
+.auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#eef4ff,#f7f9fd)}
+.auth-card{width:min(100%,460px);background:#fff;border:1px solid var(--line);border-radius:16px;padding:30px;box-shadow:0 14px 40px rgba(20,40,70,.10)}
+.auth-card h1{font-size:25px;margin:0 0 7px;color:var(--navy)}.auth-subtitle{font-size:13px;color:var(--muted);margin-bottom:22px}
+.auth-field{display:block;margin:14px 0 6px;font-size:13px;font-weight:600}.auth-input{width:100%;padding:12px 13px;border:1px solid #cbd7e8;border-radius:8px;font-size:14px}
+.auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.auth-btn{border:0;border-radius:8px;background:var(--blue);color:white;padding:11px 17px;font-weight:600}
+.auth-btn.secondary{background:#e8f0fc;color:#174d99}.auth-link{border:0;background:none;color:var(--blue);padding:8px 0;text-decoration:underline}
+.auth-message{display:none;margin-top:15px;padding:11px 12px;border-radius:8px;font-size:13px;white-space:pre-wrap}
+.auth-message.error{display:block;background:#fff0ef;color:#b42318}.auth-message.success{display:block;background:#e8f8ef;color:#087443}
+.auth-note{font-size:12px;color:var(--muted);margin-top:15px}#logoutBtn{border:1px solid #d6e1f0;background:white;border-radius:7px;padding:7px 10px;color:var(--ink);font-size:12px}
+
+</style>
+</head>
+<body>
+
+<section id="authScreen" class="auth-screen">
+ <div class="auth-card">
+  <div style="font-weight:800;color:#1769df;margin-bottom:18px">STACKLY <span style="color:#142846">OneERP</span></div>
+  <form id="loginForm">
+   <h1>Welcome back</h1><p class="auth-subtitle">Sign in to access the FICO workspace.</p>
+   <label class="auth-field" for="loginEmail">Email</label><input class="auth-input" id="loginEmail" type="email" required autocomplete="username" placeholder="Enter your work email">
+   <label class="auth-field" for="loginPassword">Password</label><input class="auth-input" id="loginPassword" type="password" required autocomplete="current-password" placeholder="Enter your password">
+   <div class="auth-actions"><button class="auth-btn" type="submit">Login</button><button class="auth-btn secondary" type="button" id="showRegisterBtn">Create account</button></div>
+   <button class="auth-link" type="button" id="showForgotBtn">Forgot password?</button>
+  </form>
+  <form id="registerForm" hidden>
+   <h1>Create account</h1><p class="auth-subtitle">New accounts receive the employee role.</p>
+   <label class="auth-field" for="registerName">Full name</label><input class="auth-input" id="registerName" required minlength="2" maxlength="150" autocomplete="name">
+   <label class="auth-field" for="registerEmail">Email</label><input class="auth-input" id="registerEmail" type="email" required maxlength="254" autocomplete="email">
+   <label class="auth-field" for="registerPassword">Password (minimum 12 characters)</label><input class="auth-input" id="registerPassword" type="password" required minlength="12" maxlength="256" autocomplete="new-password">
+   <div class="auth-actions"><button class="auth-btn" type="submit">Register</button><button class="auth-btn secondary" type="button" id="showLoginFromRegister">Back to login</button></div>
+  </form>
+  <form id="forgotForm" hidden>
+   <h1>Forgot password?</h1><p class="auth-subtitle">Enter your registered email to request a reset link.</p>
+   <label class="auth-field" for="forgotEmail">Email</label><input class="auth-input" id="forgotEmail" type="email" required autocomplete="email">
+   <div class="auth-actions"><button class="auth-btn" type="submit">Send reset link</button><button class="auth-btn secondary" type="button" id="showLoginFromForgot">Back to login</button></div>
+  </form>
+  <form id="resetForm" hidden>
+   <h1>Set a new password</h1><p class="auth-subtitle">Choose a new password for your account.</p>
+   <label class="auth-field" for="newPassword">New password (minimum 12 characters)</label><input class="auth-input" id="newPassword" type="password" required minlength="12" maxlength="256" autocomplete="new-password">
+   <label class="auth-field" for="confirmPassword">Confirm new password</label><input class="auth-input" id="confirmPassword" type="password" required minlength="12" maxlength="256" autocomplete="new-password">
+   <div class="auth-actions"><button class="auth-btn" type="submit">Update password</button><button class="auth-btn secondary" type="button" id="showLoginFromReset">Back to login</button></div>
+  </form>
+  <div id="authMessage" class="auth-message" role="status" aria-live="polite"></div>
+  <p class="auth-note">Use your own registered account. Never share your password.</p>
+ </div>
+</section>
+
+<div class="layout" id="erpLayout" style="display:none">
+<aside class="sidebar">
+  <div class="brand">STACKLY <span>OneERP</span></div>
+  <div class="nav-heading">Main Menu</div>
+  <a class="nav-link active" href="#home"><span class="ico">⌂</span>Home</a>
+  <div class="nav-heading">FICO Modules</div>
+  <a class="nav-link" href="#company" data-module="company">
+      <span class="ico">▦</span>Company
+  </a>
+<a class="nav-link" href="#fiscal-year" data-module="fiscal-year">
+    <span class="ico">▣</span>
+    Fiscal Year
+</a>
+<a class="nav-link"
+   href="#fiscal-period"
+   data-module="fiscal-period">
+
+    <span class="ico">▦</span>
+    Fiscal Period
+
+</a>
+  <a class="nav-link" href="#coa" data-module="coa"><span class="ico">▤</span>Chart of Accounts</a>
+<a class="nav-link"
+   href="#journal-entry"
+   data-module="journal-entry">
+
+    <span class="ico">▤</span>
+    Journal Entry
+
+</a>
+  <a class="nav-link" href="#general-ledger" data-module="general-ledger"><span class="ico">▤</span>General Ledger</a>
+<a class="nav-link" href="#ap" data-module="ap">
+    <span class="ico">▣</span>
+    Accounts Payable
+</a>
+  <a class="nav-link" href="#ar" data-module="ar"><span class="ico">♧</span>Accounts Receivable</a>
+  <a class="nav-link" href="#fixed-assets" data-module="fixed-assets"><span class="ico">⌂</span>Fixed Assets</a>
+  <a class="nav-link" href="#budgeting" data-module="budgeting"><span class="ico">▣</span>Budgeting</a>
+  <a class="nav-link" href="#gst" data-module="gst"><span class="ico">▧</span>GST</a>
+<a class="nav-link" href="#financial-reports" data-module="financial-reports">
+    <span class="ico">▤</span>Financial Reports
+</a></aside>
+
+<main class="main">
+<header class="topbar">
+<div class="search">
+    <input
+        id="globalSearch"
+        type="search"
+        placeholder="Search modules, actions and transactions..."
+        aria-label="Search modules, actions and transactions"
+        autocomplete="off"
+        aria-autocomplete="list"
+        aria-controls="searchResults"
+    >
+    <div id="searchResults"
+         class="search-results"
+         role="listbox"
+         aria-label="Search results">
+    </div>
+</div>
+<div class="user"><div class="avatar" id="userAvatar">U</div><div class="user-info"><strong id="signedInName">Signed-in user</strong><br><span id="signedInEmail" style="color:#667894"></span></div><button id="logoutBtn" type="button">Logout</button></div>
+</header>
+<section class="content" id="homeDashboard">
+  <div class="heading">
+    <div><h1>FICO - Financial Accounting</h1><p>Manage your company's financial transactions and reports</p></div>
+    <button class="btn-refresh" id="refreshBtn">↻ Refresh</button>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px">
+    <label for="companyCode" style="font-size:12px;color:#667894">Company Code</label>
+    <input id="companyCode" value="COMP001" maxlength="20" style="padding:9px 11px;border:1px solid #dce4ef;border-radius:7px;width:150px" aria-label="Company code">
+    <button class="btn-refresh" id="loadCompanyBtn" type="button">Load Company Data</button>
+    <span style="font-size:11px;color:#667894">Change COMP001 to your actual company code if different.</span>
+  </div>
+
+  <div class="columns">
+  <div class="left-col">
+    <div class="stats">
+      <article class="stat"><div class="stat-icon blue">▤</div><div class="stat-label">Total Accounts</div><div class="stat-value" id="totalAccounts">—</div><a class="small-link" href="#coa" data-module="coa">Chart of Accounts →</a></article>
+      <article class="stat"><div class="stat-icon green">♧</div><div class="stat-label">Active Customers</div><div class="stat-value" id="activeCustomers">—</div><a class="small-link" href="#ar" data-module="ar">Accounts Receivable →</a></article>
+      <article class="stat"><div class="stat-icon purple">▤</div><div class="stat-label">Posted Invoices</div><div class="stat-value" id="postedInvoices">—</div><a class="small-link" href="#ar" data-module="ar">View AR →</a></article>
+      <article class="stat"><div class="stat-icon orange">₹</div><div class="stat-label">Payments Received</div><div class="stat-value" id="paymentsReceivedCount">—</div><a class="small-link" href="#ar" data-module="ar">View Payments →</a></article>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Recent Transactions</h2><span style="font-size:11px;color:#1769df">Latest records</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Date</th><th>Document No.</th><th>Module</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody id="transactionRows"><tr><td colspan="6" class="empty">Loading AR invoices and payments...</td></tr></tbody></table></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>FICO Modules</h2><span style="font-size:11px;color:#1769df">Module Navigation</span></div>
+      <div class="modules">
+    <a class="module" href="#company" data-module="company">
+        <span class="module-icon">▦</span>
+        <span>
+            <strong>Company</strong>
+            <small>Manage companies and business units</small>
+        </span>
+    </a>
+        <a class="module" href="#coa" data-module="coa"><span class="module-icon">▤</span><span><strong>Chart of Accounts</strong><small>Manage accounts and hierarchy</small></span></a>
+        <a class="module" href="#journal-entry"><span class="module-icon">✎</span><span><strong>Journal Entry</strong><small>Record financial journal entries</small></span></a>
+      <a class="module" href="#general-ledger" data-module="general-ledger">
+          <span class="module-icon">▧</span>
+          <span>
+              <strong>General Ledger</strong>
+              <small>View account ledger and financial transactions</small>
+          </span>
+      </a>        
+        <a class="module" href="#ap" data-module="ap"><span class="module-icon">▣</span><span><strong>Accounts Payable</strong><small>Manage supplier invoices and payments</small></span></a>
+        <a class="module" href="#ar" data-module="ar"><span class="module-icon">♧</span><span><strong>Accounts Receivable</strong><small>Manage customer invoices and receipts</small></span></a>
+        <a class="module" href="#fixed-assets"><span class="module-icon">⌂</span><span><strong>Fixed Assets</strong><small>Track assets and depreciation</small></span></a>
+        <a class="module" href="#budgeting"><span class="module-icon">▣</span><span><strong>Budgeting</strong><small>Plan and monitor budgets</small></span></a>
+        <a class="module" href="#gst"><span class="module-icon">▧</span><span><strong>GST</strong><small>Handle GST transactions and reports</small></span></a>
+<a class="module" href="#financial-reports" data-module="financial-reports">
+    <span class="module-icon">▤</span>
+    <span>
+        <strong>Financial Reports</strong>
+        <small>View available financial reports</small>
+    </span>
+</a>
+      </div>
+    </section>
+  </div>
+
+  <aside class="right-col">
+    <section class="panel">
+      <div class="panel-head"><h2>Quick Actions</h2></div>
+      <div class="actions">
+        <a class="action" href="#journal-entry"><span class="action-icon">▤</span>Create Journal Entry<span class="arrow">›</span></a>
+       <a class="action" href="#ap" data-module="ap">
+    <span class="action-icon">▧</span>Create AP Invoice<span class="arrow">›</span>
+</a>       
+        <a class="action" href="#ar" data-module="ar"><span class="action-icon">▤</span>Open AR Payments<span class="arrow">›</span></a>
+        <a class="action" href="#fixed-assets"><span class="action-icon">▦</span>Add Fixed Asset<span class="arrow">›</span></a>
+        <a class="action" href="#budgeting"><span class="action-icon">▣</span>Create Budget<span class="arrow">›</span></a>
+        <a class="action" href="#financial-reports"><span class="action-icon">▤</span>Generate Report<span class="arrow">›</span></a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Financial Summary</h2><select id="periodSelect" style="border:0;background:white;color:#667894;font-size:11px"><option value="year">This Year</option><option value="month">This Month</option></select></div>
+      <div class="fin-item"><div class="fin-label">Posted Invoice Total</div><div class="fin-value" id="totalIncome">—</div></div>
+      <div class="fin-item"><div class="fin-label">Payments Received</div><div class="fin-value" id="totalExpenses">—</div></div>
+      <div class="fin-item"><div class="fin-label">Invoice Tax Total</div><div class="fin-value" id="netProfit">—</div></div>
+      <div class="hint">AR-only totals for the selected period. These are not company-wide income, expenses, or net profit.</div>
+    </section>
+    <p class="api-status" id="apiStatus" role="status">Dashboard layout loaded. Waiting for backend endpoints.</p>
+  </aside>
+  </div>
+</section>
+<section id="moduleContainer" style="display:none;padding:24px;">
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-bottom:14px;">
+    <button class="btn-refresh" id="backHomeBtn" type="button">← Back to Home</button>
+  </div>
+  <iframe id="moduleFrame" title="ERP module" style="width:100%;min-height:1100px;border:1px solid #e4ebf4;border-radius:10px;background:white;" loading="lazy"></iframe>
+</section>
+</main>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+const $ = id => document.getElementById(id);
+
+const AUTH_API = API_BASE + "/api/auth";
+let resetTokenFromLink = "";
+function authMessage(message, type="error") {
+ const el=$("authMessage"); el.textContent=message; el.className="auth-message "+type;
+}
+function clearAuthMessage(){const el=$("authMessage");el.textContent="";el.className="auth-message";}
+function showAuthForm(id){["loginForm","registerForm","forgotForm","resetForm"].forEach(x=>$(x).hidden=x!==id);clearAuthMessage();}
+async function authRequest(path, options={}) {
+ const response=await fetch(AUTH_API+path,{...options,credentials:"include",headers:{"Content-Type":"application/json",...(options.headers||{})}});
+ const raw=await response.text();let data=null;try{data=raw?JSON.parse(raw):null;}catch(_){data={detail:raw};}
+ if(!response.ok){const d=data?.detail;throw new Error(Array.isArray(d)?d.map(x=>x.msg||JSON.stringify(x)).join("; "):(d||"Request failed ("+response.status+")"));}
+ return data;
+}
+function showERP(user){
+ $("authScreen").style.display="none";$("erpLayout").style.display="flex";
+ const name=user?.full_name||user?.email||"OneERP User";
+ $("signedInName").textContent=name;$("signedInEmail").textContent=user?.email||"";
+ $("userAvatar").textContent=name.trim().charAt(0).toUpperCase()||"U";
+ loadDashboard();
+}
+function showLogin(message=""){
+ $("erpLayout").style.display="none";$("authScreen").style.display="grid";showAuthForm("loginForm");
+ if(message)authMessage(message,"success");
+}
+$("showRegisterBtn").addEventListener("click",()=>showAuthForm("registerForm"));
+$("showForgotBtn").addEventListener("click",()=>showAuthForm("forgotForm"));
+$("showLoginFromRegister").addEventListener("click",()=>showAuthForm("loginForm"));
+$("showLoginFromForgot").addEventListener("click",()=>showAuthForm("loginForm"));
+$("showLoginFromReset").addEventListener("click",()=>showAuthForm("loginForm"));
+
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();const b=e.submitter;if(b)b.disabled=true;
+ try{const u=await authRequest("/login",{method:"POST",body:JSON.stringify({email:$("loginEmail").value.trim(),password:$("loginPassword").value})});$("loginPassword").value="";showERP(u);}
+ catch(err){authMessage(err.message);}finally{if(b)b.disabled=false;}
+});
+$("registerForm").addEventListener("submit",async e=>{
+ e.preventDefault();const b=e.submitter;if(b)b.disabled=true;
+ try{const u=await authRequest("/register",{method:"POST",body:JSON.stringify({full_name:$("registerName").value.trim(),email:$("registerEmail").value.trim(),password:$("registerPassword").value})});$("registerPassword").value="";showERP(u);}
+ catch(err){authMessage(err.message);}finally{if(b)b.disabled=false;}
+});
+$("forgotForm").addEventListener("submit",async e=>{
+ e.preventDefault();const b=e.submitter;if(b)b.disabled=true;
+ try{const r=await authRequest("/forgot-password",{method:"POST",body:JSON.stringify({email:$("forgotEmail").value.trim()})});authMessage(r?.message||"If an account exists, reset instructions will be sent.","success");}
+ catch(err){authMessage(err.message);}finally{if(b)b.disabled=false;}
+});
+$("resetForm").addEventListener("submit",async e=>{
+ e.preventDefault();const p=$("newPassword").value;
+ if(p!==$("confirmPassword").value){authMessage("The passwords do not match.");return;}
+ if(!resetTokenFromLink){authMessage("Reset token is missing. Request a new reset email.");return;}
+ const b=e.submitter;if(b)b.disabled=true;
+ try{const r=await authRequest("/reset-password",{method:"POST",body:JSON.stringify({token:resetTokenFromLink,password:p})});resetTokenFromLink="";history.replaceState(null,"",location.pathname+location.search);$("newPassword").value="";$("confirmPassword").value="";showLogin(r?.message||"Password updated. Please sign in.");}
+ catch(err){authMessage(err.message);}finally{if(b)b.disabled=false;}
+});
+$("logoutBtn").addEventListener("click",async()=>{
+ try{await authRequest("/logout",{method:"POST"});}catch(err){console.warn(err);}
+ showLogin("You have been logged out.");
+});
+async function initializeAuthentication(){
+ const hash=location.hash.startsWith("#")?location.hash.slice(1):"";
+ resetTokenFromLink=new URLSearchParams(hash).get("reset_token")||"";
+ if(resetTokenFromLink){history.replaceState(null,"",location.pathname+location.search);$("authScreen").style.display="grid";showAuthForm("resetForm");return;}
+ try{const s=await authRequest("/me",{method:"GET"});if(s?.authenticated&&s.user)showERP(s.user);else showLogin();}
+ catch(err){console.warn("Session check:",err);showLogin();}
+}
+
+function currency(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: "INR", maximumFractionDigits: 2
+  }).format(n);
+}
+function companyCode() {
+  return $("companyCode").value.trim();
+}
+async function getJSON(path) {
+  const response = await fetch(API_BASE + path, { credentials: "include" });
+  if (!response.ok) {
+    let message = "HTTP " + response.status;
+    try {
+      const body = await response.json();
+      if (body.detail) message += ": " + body.detail;
+    } catch (_) {}
+    throw new Error(message);
+  }
+  return response.json();
+}
+function showError(message) {
+  $("apiStatus").textContent = message;
+}
+async function loadSummary() {
+  const code = encodeURIComponent(companyCode());
+  const d = await getJSON("/dashboard/summary?company_code=" + code);
+  $("totalAccounts").textContent = d.total_accounts ?? "—";
+  $("activeCustomers").textContent = d.active_customers ?? "—";
+  $("postedInvoices").textContent = d.posted_invoices ?? "—";
+  $("paymentsReceivedCount").textContent = d.total_payments ?? "—";
+}
+async function loadTransactions() {
+  const code = encodeURIComponent(companyCode());
+  const result = await getJSON("/dashboard/recent-transactions?company_code=" + code + "&limit=10");
+  const items = Array.isArray(result) ? result : result.items;
+  const body = $("transactionRows");
+  body.replaceChildren();
+  if (!Array.isArray(items) || items.length === 0) {
+    const row = body.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 6;
+    cell.className = "empty";
+    cell.textContent = "No AR invoices or payments found for this company.";
+    return;
+  }
+  items.forEach(item => {
+    const row = body.insertRow();
+    [item.date, item.document_number, item.module, item.description, currency(item.amount)]
+      .forEach(value => {
+        const cell = row.insertCell();
+        cell.textContent = value ?? "—";
+      });
+    const statusCell = row.insertCell();
+    const badge = document.createElement("span");
+    badge.className = "badge-status";
+    badge.textContent = item.status ?? "Unknown";
+    const status = String(item.status ?? "").toLowerCase();
+    if (["posted", "paid"].includes(status)) badge.classList.add("posted");
+    else if (status === "approved") badge.classList.add("approved");
+    else if (["draft", "pending", "created"].includes(status)) badge.classList.add("pending");
+    statusCell.appendChild(badge);
+  });
+}
+async function loadFinancialSummary() {
+  const code = encodeURIComponent(companyCode());
+  const period = encodeURIComponent($("periodSelect").value);
+  const d = await getJSON("/dashboard/financial-summary?company_code=" + code + "&period=" + period);
+  $("totalIncome").textContent = currency(d.posted_invoice_total);
+  $("totalExpenses").textContent = currency(d.payments_received);
+  $("netProfit").textContent = currency(d.invoice_tax_total);
+}
+async function loadDashboard() {
+  if (!companyCode()) {
+    showError("Enter a company code before loading dashboard data.");
+    return;
+  }
+  showError("Loading CoA and AR data...");
+  const results = await Promise.allSettled([
+    loadSummary(), loadTransactions(), loadFinancialSummary()
+  ]);
+  const failures = results.filter(x => x.status === "rejected");
+  if (failures.length === 0) {
+    showError("Connected: showing Chart of Accounts and Accounts Receivable data for " + companyCode() + ".");
+  } else {
+    console.error("Dashboard API errors:", failures.map(x => x.reason));
+    showError("Some dashboard data could not load. Check that FastAPI is running, dashboard.py is registered, and the company code is correct. Details: " + failures.map(x => x.reason.message).join(" | "));
+  }
+}
+$("refreshBtn").addEventListener("click", loadDashboard);
+$("loadCompanyBtn").addEventListener("click", loadDashboard);
+$("companyCode").addEventListener("keydown", e => { if (e.key === "Enter") loadDashboard(); });
+$("periodSelect").addEventListener("change", loadFinancialSummary);
+const homeDashboard = $("homeDashboard");
+const moduleContainer = $("moduleContainer");
+const moduleFrame = $("moduleFrame");
+const searchInput = $("globalSearch");
+const searchResults = $("searchResults");
+
+const moduleNames = {
+    company: "Company",
+    "fiscal-year": "Fiscal Year",
+    "fiscal-period": "Fiscal Period",
+    coa: "Chart of Accounts",
+    "journal-entry": "Journal Entry",
+    "general-ledger": "General Ledger",
+    ap: "Accounts Payable",
+    ar: "Accounts Receivable",
+    "fixed-assets": "Fixed Assets",
+    budgeting: "Budgeting",
+    gst: "GST",
+    "financial-reports": "Financial Reports"
+};
+
+const moduleFiles = {
+    company: "Company.html",
+    "fiscal-year": "fiscal_year.html",
+    "fiscal-period": "fiscal_period.html",
+    coa: "coa.html",
+    "journal-entry": "journal_entry.html",
+    "general-ledger": "general_ledger.html",
+    ap: "ap.html",
+    ar: "ar.html",    
+    "fixed-assets": "fixed_assets.html",
+    budgeting: "budgeting.html",
+    gst: "gst.html",
+    "financial-reports": "financial_reports.html"
+};
+
+const moduleSearchTerms = {
+    company: "company setup organization business unit master data",
+    "fiscal-year": "fiscal year financial year accounting year",
+    "fiscal-period": "fiscal period accounting period month period close",
+    coa: "chart of accounts coa account hierarchy accounts ledger",
+    "journal-entry": "journal entry voucher debit credit posting",
+    "general-ledger": "general ledger gl account transactions balance ledger",
+    ap: "accounts payable ap vendor supplier bills purchase invoice payment",
+    ar: "accounts receivable ar customer customers clients sales invoice receipt payment",
+    "fixed-assets": "fixed assets asset register depreciation disposal transfer",
+    budgeting: "budget budgeting plan allocation actual variance",
+    gst: "gst tax cgst sgst igst input tax credit itc gstr invoice",
+    "financial-reports": "financial reports trial balance profit loss balance sheet statements"
+};
+
+const quickActionSearch = [
+    { label: "Create Journal Entry", terms: "journal entry voucher debit credit", module: "journal-entry", icon: "▤" },
+    { label: "Create AP Invoice", terms: "ap invoice vendor supplier purchase bill", module: "ap", icon: "▧" },
+    { label: "Open AR Payments", terms: "ar payment customer receipt collection", module: "ar", icon: "▤" },
+    { label: "Add Fixed Asset", terms: "fixed asset depreciation asset register", module: "fixed-assets", icon: "▦" },
+    { label: "Create Budget", terms: "budget budgeting allocation", module: "budgeting", icon: "▣" },
+    { label: "Generate Report", terms: "financial report trial balance profit loss balance sheet", module: "financial-reports", icon: "▤" }
+];
+
+function normalizeSearch(value) {
+    return String(value || "").toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function searchWordsMatch(query, text) {
+    const q = normalizeSearch(query);
+    const haystack = normalizeSearch(text);
+    if (!q) return false;
+    return haystack.includes(q) || q.split(" ").every(word => haystack.includes(word));
+}
+
+function findSearchMatches(query) {
+    const q = normalizeSearch(query);
+    if (!q) return { modules: [], actions: [], transactions: [] };
+
+    const modules = Object.keys(moduleFiles)
+        .map(key => {
+            const card = document.querySelector(`.module[data-module="${key}"]`) ||
+                Array.from(document.querySelectorAll(".module")).find(el =>
+                    normalizeSearch(el.getAttribute("href")).endsWith("#" + key)
+                );
+            const cardText = card ? card.innerText : moduleNames[key];
+            const terms = `${moduleNames[key]} ${moduleSearchTerms[key] || ""} ${cardText}`;
+            return searchWordsMatch(q, terms)
+                ? { type: "module", key, label: moduleNames[key], description: "Open module", icon: "▦" }
+                : null;
+        })
+        .filter(Boolean);
+
+    const actions = quickActionSearch
+        .filter(item => searchWordsMatch(q, `${item.label} ${item.terms}`))
+        .map(item => ({
+            type: "action",
+            key: item.module,
+            label: item.label,
+            description: `Open ${moduleNames[item.module]}`,
+            icon: item.icon
+        }));
+
+    const transactions = Array.from(document.querySelectorAll("#transactionRows tr"))
+        .filter(row => row.cells && row.cells.length > 1 && !row.querySelector(".empty"))
+        .filter(row => searchWordsMatch(q, row.innerText))
+        .map(row => ({
+            type: "transaction",
+            label: row.cells[1]?.innerText?.trim() || "Transaction",
+            description: `${row.cells[2]?.innerText?.trim() || ""} · ${row.cells[3]?.innerText?.trim() || ""}`,
+            icon: "▤",
+            row
+        }));
+
+    return { modules, actions, transactions };
+}
+
+function addSearchGroup(title, entries) {
+    if (!entries.length) return;
+
+    const heading = document.createElement("div");
+    heading.className = "search-group-label";
+    heading.textContent = title;
+    searchResults.appendChild(heading);
+
+    entries.forEach(entry => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "search-result";
+        button.setAttribute("role", "option");
+        button.dataset.searchType = entry.type;
+        button.dataset.moduleKey = entry.key || "";
+
+        const icon = document.createElement("span");
+        icon.className = "search-result-icon";
+        icon.textContent = entry.icon || "⌕";
+
+        const textWrap = document.createElement("span");
+        textWrap.className = "search-result-text";
+
+        const title = document.createElement("span");
+        title.className = "search-result-title";
+        title.textContent = entry.label;
+
+        const description = document.createElement("span");
+        description.className = "search-result-description";
+        description.textContent = entry.description || "";
+
+        textWrap.append(title, description);
+        button.append(icon, textWrap);
+        button.addEventListener("click", () => selectSearchResult(entry));
+        searchResults.appendChild(button);
+    });
+}
+
+function renderSearchResults(query) {
+    searchResults.replaceChildren();
+    const q = normalizeSearch(query);
+    if (!q) {
+        searchResults.classList.remove("show");
+        searchInput.setAttribute("aria-expanded", "false");
+        return;
+    }
+
+    const matches = findSearchMatches(q);
+    addSearchGroup("Modules", matches.modules);
+    addSearchGroup("Quick Actions", matches.actions);
+    addSearchGroup("Recent Transactions", matches.transactions);
+
+    if (!matches.modules.length && !matches.actions.length && !matches.transactions.length) {
+        const empty = document.createElement("div");
+        empty.className = "search-empty";
+        empty.textContent = `No results found for "${query}".`;
+        searchResults.appendChild(empty);
+    }
+
+    searchResults.classList.add("show");
+    searchInput.setAttribute("aria-expanded", "true");
+}
+
+function selectSearchResult(entry) {
+    searchResults.classList.remove("show");
+    searchInput.setAttribute("aria-expanded", "false");
+
+    if (entry.type === "transaction") {
+        showHome();
+        document.querySelectorAll("#transactionRows tr").forEach(row => row.classList.remove("search-match"));
+        if (entry.row && entry.row.isConnected) {
+            entry.row.classList.add("search-match");
+            entry.row.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    } else if (entry.key && moduleFiles[entry.key]) {
+        openModule(entry.key);
+    }
+}
+
+searchInput.addEventListener("input", () => renderSearchResults(searchInput.value));
+
+searchInput.addEventListener("keydown", event => {
+    const options = Array.from(searchResults.querySelectorAll(".search-result"));
+    if (!searchResults.classList.contains("show") || !options.length) {
+        if (event.key === "Escape") {
+            searchResults.classList.remove("show");
+            searchInput.setAttribute("aria-expanded", "false");
+        }
+        return;
+    }
+
+    const current = options.findIndex(option => option.classList.contains("active"));
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const next = event.key === "ArrowDown"
+            ? (current + 1) % options.length
+            : (current <= 0 ? options.length - 1 : current - 1);
+        options.forEach(option => option.classList.remove("active"));
+        options[next].classList.add("active");
+        options[next].scrollIntoView({ block: "nearest" });
+    } else if (event.key === "Enter") {
+        const selected = options[current >= 0 ? current : 0];
+        if (selected) {
+            event.preventDefault();
+            selected.click();
+        }
+    } else if (event.key === "Escape") {
+        searchResults.classList.remove("show");
+        searchInput.setAttribute("aria-expanded", "false");
+    }
+});
+
+document.addEventListener("click", event => {
+    if (!event.target.closest(".search")) {
+        searchResults.classList.remove("show");
+        searchInput.setAttribute("aria-expanded", "false");
+    }
+});
+
+function openModule(name) {
+    const src = moduleFiles[name];
+
+    if (!src) {
+        console.error("Module file not configured:", name);
+        return;
+    }
+  homeDashboard.style.display = "none";
+  moduleContainer.style.display = "block";
+  document.querySelectorAll(".nav-link").forEach(link => link.classList.toggle("active", link.dataset.module === name));
+  if (moduleFrame.dataset.module !== name) {
+    moduleFrame.dataset.module = name;
+    moduleFrame.src = src;
+  } else if (!moduleFrame.src) {
+    moduleFrame.src = src;
+  }
+  history.replaceState(null, "", "#" + name);
+}
+function showHome() {
+  moduleContainer.style.display = "none";
+  homeDashboard.style.display = "block";
+  document.querySelectorAll(".nav-link").forEach(link => link.classList.toggle("active", link.textContent.includes("Home")));
+  history.replaceState(null, "", location.pathname);
+}
+document.addEventListener("click", function(event) {
+  const link = event.target.closest("a[data-module], a[href^=\"#\"]");
+  if (!link) return;
+  const moduleKey = link.dataset.module || link.getAttribute("href").slice(1);
+  if (!moduleFiles[moduleKey]) return;
+  event.preventDefault();
+  openModule(moduleKey);
+});
+$("backHomeBtn").addEventListener("click", showHome);
+document.querySelectorAll(".nav-link").forEach(link => {
+  if (link.textContent.includes("Home")) link.addEventListener("click", function(event) { event.preventDefault(); showHome(); });
+});
+moduleFrame.addEventListener("load", function () {
+    try {
+        const doc = moduleFrame.contentDocument;
+        if (!doc) return;
+
+        // Remove any previously injected styles.
+        doc.getElementById("erp-embedded-module-style")?.remove();
+
+        const style = doc.createElement("style");
+        style.id = "erp-embedded-module-style";
+
+        style.textContent = `
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                min-height: 0 !important;
+                background: #f4f7fc !important;
+                font-family: Arial, Helvetica, sans-serif !important;
+            }
+
+            /* Hide the embedded module's duplicate ERP sidebar. */
+            body > .layout > aside,
+            body > aside,
+            body > header {
+                display: none !important;
+            }
+
+            /* Remove the outer layout spacing. */
+            body > .layout {
+                display: block !important;
+                min-height: 0 !important;
+            }
+
+            /* Let the module content use the available width. */
+            body > .layout > main,
+            body > main {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                padding: 4px !important;
+                margin: 0 !important;
+            }
+
+            /* Remove extra container margins in Bootstrap-based modules. */
+            .container {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 4px !important;
+            }
+        `;
+
+        doc.head.appendChild(style);
+
+        const resize = () => {
+            moduleFrame.style.height =
+                Math.max(850, doc.body.scrollHeight + 40) + "px";
+        };
+
+        setTimeout(resize, 150);
+        setTimeout(resize, 500);
+
+    } catch (error) {
+        console.warn("Could not adapt embedded module styling:", error);
+    }
+});
+const initialModule = decodeURIComponent(location.hash.replace(/^#/, ""));
+if (initialModule && moduleFiles[initialModule]) {
+    openModule(initialModule);
+}
+
+initializeAuthentication();
+</script>
+</body>
+</html>

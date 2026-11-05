@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accounts Payable | STACKLY OneERP</title>
+<style>
+:root{--navy:#152b49;--blue:#2460a8;--blue2:#1769d2;--bg:#f3f6fb;--border:#dce5f1;--text:#1c2e45;--muted:#687b94;--green:#16845b;--red:#b42318;--amber:#a15c00;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Arial,Helvetica,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.ap-shell{max-width:1600px;margin:0 auto;padding:24px}
+.ap-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
+.ap-heading h1{font-size:30px;margin:0 0 6px;color:var(--navy)}.ap-heading p{margin:0;color:var(--muted)}
+.btn{border:1px solid var(--border);background:white;color:var(--navy);padding:10px 15px;border-radius:9px;font-weight:600}
+.btn.primary{background:var(--blue2);border-color:var(--blue2);color:white}.btn.danger{color:var(--red)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.tab{border:0;background:transparent;color:var(--muted);padding:10px 15px;border-radius:8px;font-weight:700}
+.tab.active{background:#e2edfc;color:var(--blue)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.card,.panel{background:white;border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 7px #17365d08}
+.card{padding:18px}.card .label{color:var(--muted);font-size:14px}.card .value{font-size:28px;font-weight:700;margin-top:8px;color:var(--navy)}.card .hint{font-size:12px;color:var(--muted);margin-top:5px}
+.panel{padding:18px;margin-bottom:18px}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.panel h2{font-size:19px;margin:0;color:var(--navy)}.filters{display:flex;gap:9px;flex-wrap:wrap}
+input,select,textarea{border:1px solid #cbd8e9;border-radius:8px;padding:10px 12px;background:#fff;color:var(--text);min-height:42px;max-width:100%}input:focus,select:focus,textarea:focus{outline:2px solid #b8d5ff;border-color:#6ba2ed}
+.search{min-width:230px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:12px 11px;border-bottom:1px solid #edf1f7;vertical-align:middle}th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:#f8fafd}tbody tr:hover{background:#f9fbfe}.empty{text-align:center;color:var(--muted);padding:28px}
+.badge{display:inline-block;border-radius:20px;padding:4px 9px;font-size:12px;font-weight:700;background:#eef2f7;color:#516174;white-space:nowrap}
+.badge.paid,.badge.active,.badge.approved{background:#dff6eb;color:#14764e}.badge.pending,.badge.draft{background:#fff1d7;color:#8c5600}.badge.overdue,.badge.rejected,.badge.inactive{background:#fee4e2;color:#b42318}.badge.partial{background:#e4edff;color:#2459a6}
+.row-actions{display:flex;gap:6px}.small-btn{border:1px solid var(--border);border-radius:7px;background:#fff;padding:6px 9px;color:var(--blue);font-weight:600}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:13px;font-weight:700;color:#52677f}.field.full{grid-column:1/-1}.field textarea{min-height:76px;resize:vertical}.form-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
+.notice{padding:12px 14px;border-radius:9px;margin:0 0 16px;display:none}.notice.show{display:block}.notice.error{background:#feeceb;color:#9d241d}.notice.success{background:#e0f6eb;color:#176746}.notice.info{background:#e7f0ff;color:#244f91}
+.modal-backdrop{position:fixed;inset:0;background:#0d203a77;display:none;align-items:center;justify-content:center;padding:18px;z-index:1000}.modal-backdrop.show{display:flex}.modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:white;border-radius:15px;padding:22px;box-shadow:0 20px 70px #0003}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.modal-head h2{margin:0;color:var(--navy)}.close{border:0;background:#f0f4f9;border-radius:8px;padding:6px 11px;font-size:20px}
+.view{display:none}.view.active{display:block}.right{text-align:right}.muted{color:var(--muted)}.currency{font-variant-numeric:tabular-nums;white-space:nowrap}.split{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+@media(max-width:950px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.ap-shell{padding:16px}}
+@media(max-width:600px){.cards{grid-template-columns:1fr 1fr}.ap-heading{display:block}.ap-heading .toolbar{margin-top:14px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.search{min-width:0;width:100%}.ap-shell{padding:10px}.card{padding:13px}.card .value{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="ap-shell">
+  <header class="ap-heading">
+    <div><h1>Accounts Payable</h1><p>Manage suppliers, supplier invoices, and outgoing payments.</p></div>
+    <div class="toolbar"><button class="btn" id="refreshBtn">↻ Refresh</button><button class="btn primary" id="newInvoiceBtn">＋ New Invoice</button></div>
+  </header>
+  <div class="panel" style="margin-bottom:18px">
+    <label for="apCompanyId"><strong>Company ID</strong></label>
+
+    <div class="toolbar" style="margin-top:8px">
+        <input
+            type="number"
+            id="apCompanyId"
+            min="1"
+            step="1"
+            placeholder="Enter your company ID"
+            required
+        >
+
+        <button class="btn" type="button" id="loadApCompanyBtn">
+            Load Company Data
+        </button>
+    </div>
+
+    <small class="muted">
+        Enter the existing company ID from your database.
+    </small>
+</div>
+  <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  <nav class="tabs" aria-label="Accounts Payable sections">
+    <button class="tab active" data-view="overview">Overview</button>
+    <button class="tab" data-view="suppliers">Suppliers</button>
+    <button class="tab" data-view="invoices">Invoices</button>
+    <button class="tab" data-view="payments">Payments</button>
+    <button class="tab" data-view="reports">Reports</button>
+  </nav>
+
+  <section class="view active" id="view-overview">
+    <div class="cards">
+      <article class="card"><div class="label">Total Outstanding</div><div class="value" id="statOutstanding">—</div><div class="hint">Unpaid invoice balance</div></article>
+      <article class="card"><div class="label">Overdue Invoices</div><div class="value" id="statOverdue">—</div><div class="hint">Invoices past due date</div></article>
+      <article class="card"><div class="label">Pending Approval</div><div class="value" id="statPending">—</div><div class="hint">Invoices awaiting approval</div></article>
+      <article class="card"><div class="label">Payments This Month</div><div class="value" id="statPayments">—</div><div class="hint">Recorded outgoing payments</div></article>
+    </div>
+    <div class="split">
+      <section class="panel"><div class="panel-head"><h2>Recent Invoices</h2><button class="small-btn" data-go="invoices">View all</button></div><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Supplier</th><th>Due Date</th><th>Amount</th><th>Status</th></tr></thead><tbody id="recentInvoices"><tr><td colspan="5" class="empty">Loading invoices…</td></tr></tbody></table></div></section>
+      <section class="panel"><div class="panel-head"><h2>Quick Actions</h2></div><div class="toolbar" style="display:grid"><button class="btn" id="newSupplierBtn">＋ Add Supplier</button><button class="btn" data-go="invoices">Review Invoices</button><button class="btn" data-go="payments">Record Payment</button><button class="btn" data-go="reports">View AP Reports</button></div><p class="muted" style="font-size:13px;margin-top:16px">Payment posting should update invoice balances and your accounting ledger through the backend.</p></section>
+    </div>
+  </section>
+
+  <section class="view" id="view-suppliers">
+    <section class="panel"><div class="panel-head"><h2>Suppliers</h2><div class="toolbar"><input class="search" id="supplierSearch" placeholder="Search supplier name or code"><select id="supplierStatusFilter"><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select><button class="btn primary" id="addSupplierBtn">＋ Add Supplier</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Supplier Code</th><th>Supplier Name</th><th>Email / Phone</th><th>Payment Terms</th><th>Status</th><th>Actions</th></tr></thead><tbody id="suppliersTable"><tr><td colspan="6" class="empty">Loading suppliers…</td></tr></tbody></table></div></section>
+  </section>
+
+  <section class="view" id="view-invoices">
+    <section class="panel"><div class="panel-head"><h2>Supplier Invoices</h2><div class="filters"><input class="search" id="invoiceSearch" placeholder="Search invoice or supplier"><select id="invoiceStatusFilter"><option value="">All statuses</option><option>Draft</option><option>Pending</option><option>Approved</option><option>Partially Paid</option><option>Paid</option><option>Overdue</option><option>Rejected</option></select><button class="btn primary" id="addInvoiceBtn">＋ New Invoice</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Invoice No.</th><th>Supplier</th><th>Invoice Date</th><th>Due Date</th><th>Total</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody id="invoicesTable"><tr><td colspan="8" class="empty">Loading invoices…</td></tr></tbody></table></div></section>
+  </section>
+
+  <section class="view" id="view-payments">
+    <section class="panel"><div class="panel-head"><h2>Outgoing Payments</h2><div class="filters"><input class="search" id="paymentSearch" placeholder="Search payment or invoice"><button class="btn primary" id="recordPaymentBtn">＋ Record Payment</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Payment Ref.</th><th>Date</th><th>Supplier</th><th>Invoice</th><th>Method</th><th>Amount</th><th>Status</th></tr></thead><tbody id="paymentsTable"><tr><td colspan="7" class="empty">Loading payments…</td></tr></tbody></table></div></section>
+  </section>
+
+  <section class="view" id="view-reports">
+    <div class="cards">
+      <article class="card"><div class="label">Open Invoice Count</div><div class="value" id="reportOpenCount">—</div><div class="hint">Invoices with balance remaining</div></article>
+      <article class="card"><div class="label">Paid Invoice Count</div><div class="value" id="reportPaidCount">—</div><div class="hint">Fully paid invoices</div></article>
+      <article class="card"><div class="label">Total Invoice Value</div><div class="value" id="reportInvoiceValue">—</div><div class="hint">All loaded invoices</div></article>
+      <article class="card"><div class="label">Total Paid</div><div class="value" id="reportPaidValue">—</div><div class="hint">Sum of recorded payments</div></article>
+    </div>
+    <section class="panel"><div class="panel-head"><h2>Accounts Payable Summary</h2><div class="toolbar"><label class="muted" for="reportFrom">From</label><input type="date" id="reportFrom"><label class="muted" for="reportTo">To</label><input type="date" id="reportTo"><button class="btn" id="exportCsvBtn">Export CSV</button><button class="btn" onclick="window.print()">Print</button></div></div>
+      <p class="muted">Summary is calculated from the invoice and payment records returned by your API. Apply date filters in the backend as well for large datasets.</p>
+      <div class="table-wrap"><table><thead><tr><th>Metric</th><th class="right">Value</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+    </section>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><h2 id="modalTitle">Add record</h2><button class="close" id="closeModal" aria-label="Close dialog">×</button></div>
+    <form id="recordForm"><div id="formFields" class="form-grid"></div><div class="form-actions"><button type="button" class="btn" id="cancelModal">Cancel</button><button type="submit" class="btn primary" id="submitRecord">Save</button></div></form>
+  </section>
+</div>
+
+<script>
+/*
+ * API CONFIGURATION
+ * Update these paths and field mappings to match your ap_router.py.
+ * This page assumes these REST paths; they are not confirmed by main.py alone.
+ */
+const API_BASE = "http://127.0.0.1:8000";
+const $ = id => document.getElementById(id);
+
+const AP_API = {
+    vendors: "/api/ap/vendors",
+    invoices: "/api/ap/invoices",
+    payments: "/api/ap/payments",
+    metrics: "/api/ap/metrics"
+};
+// If your router uses /ap/suppliers or /suppliers, edit AP_API above.
+const state = {suppliers:[], invoices:[], payments:[], modalType:null, editingId:null};
+const COMPANY_ID_KEY = "erp_ap_company_id";
+
+const companyIdInput = $("apCompanyId");
+
+companyIdInput.value =
+    localStorage.getItem(COMPANY_ID_KEY) || "";
+
+function getCompanyId() {
+    const id = Number(companyIdInput.value);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        throw new Error(
+            "Enter a valid Company ID before loading AP data."
+        );
+    }
+
+    localStorage.setItem(COMPANY_ID_KEY, String(id));
+
+    return id;
+}
+
+$("loadApCompanyBtn").addEventListener("click", refreshAll);
+const money = value => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(Number(value||0));
+const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const getId = row => row.id ?? row.supplier_id ?? row.invoice_id ?? row.payment_id;
+const val = (row, keys, fallback="—") => { for(const k of keys){if(row && row[k] !== undefined && row[k] !== null && row[k] !== "") return row[k]} return fallback; };
+function notify(message,type="info"){const n=$("notice");n.textContent=message;n.className="notice show "+type;window.clearTimeout(notify.timer);notify.timer=setTimeout(()=>n.className="notice",6500)}
+function normalizeList(data){if(Array.isArray(data))return data;for(const key of ["items","results","data","suppliers","invoices","payments"]){if(Array.isArray(data?.[key]))return data[key]}return []}
+function statusText(row){return String(val(row,["status","payment_status","invoice_status"],"Pending"))}
+function statusBadge(status){const s=String(status||"").toLowerCase();let cls="";if(["paid","active","approved","posted","completed"].includes(s))cls="paid";else if(["overdue","rejected","inactive","cancelled","canceled"].includes(s))cls="overdue";else if(["partially paid","partial","part_paid"].includes(s))cls="partial";else if(["draft","pending","pending approval","unpaid"].includes(s))cls="pending";return `<span class="badge ${cls}">${esc(status||"Unknown")}</span>`}
+async function api(path, options = {}) {
+    const response = await fetch(API_BASE + path, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        }
+    });
+
+    const text = await response.text();
+
+    let data = null;
+
+    try {
+        data = text ? JSON.parse(text) : null;
+    } catch {
+        data = text;
+    }
+
+    if (!response.ok) {
+        const detail =
+            data?.detail ||
+            data?.message ||
+            `HTTP ${response.status}`;
+
+        throw new Error(
+            typeof detail === "string"
+                ? detail
+                : JSON.stringify(detail)
+        );
+    }
+
+    return data;
+}
+async function getList(path){return normalizeList(await api(path))}
+function supplierName(row){const id=val(row,["supplier_id","vendor_id"]);const match=state.suppliers.find(s=>String(getId(s))===String(id));return val(row,["supplier_name","vendor_name"],match?val(match,["supplier_name","name","vendor_name"]):"Supplier #"+id)}
+function invoiceNo(row){return val(row,["invoice_number","invoice_no","document_number","reference"])}
+function amount(row){return Number(val(row,["total_amount","invoice_amount","amount","gross_amount"],0))||0}
+function balance(row){return Number(val(row,["balance_due","outstanding_amount","remaining_amount"],Math.max(0,amount(row)-Number(val(row,["paid_amount","amount_paid"],0)))))||0}
+function dateValue(row,keys){return val(row,keys,"—")}
+function renderSuppliers(){
+ const q=$("supplierSearch").value.toLowerCase(), status=$("supplierStatusFilter").value;
+ const rows=state.suppliers.filter(s=>JSON.stringify(s).toLowerCase().includes(q)).filter(s=>!status||String(val(s,["status","is_active"],"active")).toLowerCase().includes(status));
+ $("suppliersTable").innerHTML=rows.length?rows.map(s=>`<tr><td>${esc(val(s,["supplier_code","vendor_code","code"]))}</td><td><strong>${esc(val(s,["supplier_name","name","vendor_name"]))}</strong><br><span class="muted">${esc(val(s,["tax_id","gstin"],""))}</span></td><td>${esc(val(s,["email"],""))}<br>${esc(val(s,["phone","contact_number"],""))}</td><td>${esc(val(s,["payment_terms","terms"],"—"))}</td><td>${statusBadge(val(s,["status"],s.is_active===false?"Inactive":"Active"))}</td><td><div class="row-actions"><button class="small-btn" data-edit="supplier" data-id="${esc(getId(s))}">Edit</button></div></td></tr>`).join(""):`<tr><td colspan="6" class="empty">No suppliers found.</td></tr>`;
+}
+function renderInvoices(){
+ const q=$("invoiceSearch").value.toLowerCase(), status=$("invoiceStatusFilter").value.toLowerCase();
+ const rows=state.invoices.filter(i=>JSON.stringify(i).toLowerCase().includes(q)).filter(i=>!status||statusText(i).toLowerCase()===status);
+ $("invoicesTable").innerHTML=rows.length?rows.map(i=>`<tr><td><strong>${esc(invoiceNo(i))}</strong></td><td>${esc(supplierName(i))}</td><td>${esc(dateValue(i,["invoice_date","document_date"]))}</td><td>${esc(dateValue(i,["due_date","payment_due_date"]))}</td><td class="currency">${money(amount(i))}</td><td class="currency">${money(balance(i))}</td><td>${statusBadge(statusText(i))}</td><td><div class="row-actions"><button class="small-btn" data-edit="invoice" data-id="${esc(getId(i))}">Edit</button><button class="small-btn" data-pay="${esc(getId(i))}">Pay</button></div></td></tr>`).join(""):`<tr><td colspan="8" class="empty">No invoices found.</td></tr>`;
+}
+function renderPayments(){
+ const q=$("paymentSearch").value.toLowerCase();
+ const rows=state.payments.filter(p=>JSON.stringify(p).toLowerCase().includes(q));
+ $("paymentsTable").innerHTML=rows.length?rows.map(p=>`<tr><td><strong>${esc(val(p,["payment_reference","payment_number","reference","id"]))}</strong></td><td>${esc(dateValue(p,["payment_date","date"]))}</td><td>${esc(supplierName(p))}</td><td>${esc(val(p,["invoice_number","invoice_no"],"—"))}</td><td>${esc(val(p,["payment_method","method"],"—"))}</td><td class="currency">${money(val(p,["amount","payment_amount"],0))}</td><td>${statusBadge(statusText(p))}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">No payments found.</td></tr>`;
+}
+function renderOverview(){
+ const open=state.invoices.filter(i=>balance(i)>0), overdue=open.filter(i=>{const d=val(i,["due_date","payment_due_date"],"");return d && !Number.isNaN(Date.parse(d)) && Date.parse(d)<new Date(new Date().toDateString()).getTime()});
+ const pending=state.invoices.filter(i=>["pending","pending approval","draft"].includes(statusText(i).toLowerCase()));
+ const now=new Date(), month=now.getMonth(), year=now.getFullYear();
+ const paymentsMonth=state.payments.filter(p=>{const d=new Date(val(p,["payment_date","date"],""));return !Number.isNaN(d.getTime())&&d.getMonth()===month&&d.getFullYear()===year}).reduce((s,p)=>s+Number(val(p,["amount","payment_amount"],0)),0);
+ $("statOutstanding").textContent=money(open.reduce((s,i)=>s+balance(i),0));$("statOverdue").textContent=String(overdue.length);$("statPending").textContent=String(pending.length);$("statPayments").textContent=money(paymentsMonth);
+ const recent=[...state.invoices].sort((a,b)=>String(val(b,["invoice_date","created_at"],"")).localeCompare(String(val(a,["invoice_date","created_at"],"")))).slice(0,6);
+ $("recentInvoices").innerHTML=recent.length?recent.map(i=>`<tr><td>${esc(invoiceNo(i))}</td><td>${esc(supplierName(i))}</td><td>${esc(dateValue(i,["due_date","payment_due_date"]))}</td><td class="currency">${money(amount(i))}</td><td>${statusBadge(statusText(i))}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">No invoices available.</td></tr>`;
+ const total=state.invoices.reduce((s,i)=>s+amount(i),0), paid=state.invoices.filter(i=>statusText(i).toLowerCase()==="paid");
+ $("reportOpenCount").textContent=open.length;$("reportPaidCount").textContent=paid.length;$("reportInvoiceValue").textContent=money(total);$("reportPaidValue").textContent=money(state.payments.reduce((s,p)=>s+Number(val(p,["amount","payment_amount"],0)),0));
+ $("reportTable").innerHTML=[["Suppliers",state.suppliers.length],["Invoices",state.invoices.length],["Open invoices",open.length],["Overdue invoices",overdue.length],["Total invoice value",money(total)],["Outstanding balance",money(open.reduce((s,i)=>s+balance(i),0))],["Recorded payments",money(state.payments.reduce((s,p)=>s+Number(val(p,["amount","payment_amount"],0)),0))]].map(([k,v])=>`<tr><td>${esc(k)}</td><td class="right">${esc(v)}</td></tr>`).join("");
+}
+async function refreshAll() {
+    $("refreshBtn").disabled = true;
+
+    try {
+        const companyId = getCompanyId();
+
+        const query = `?company_id=${encodeURIComponent(companyId)}`;
+
+        const results = await Promise.allSettled([
+            getList(AP_API.vendors + query),
+            getList(AP_API.invoices + query),
+            getList(AP_API.payments + query)
+        ]);
+
+        const keys = ["suppliers", "invoices", "payments"];
+        const errors = [];
+
+        results.forEach((result, index) => {
+            if (result.status === "fulfilled") {
+                state[keys[index]] = result.value;
+            } else {
+                state[keys[index]] = [];
+                errors.push(
+                    `${keys[index]}: ${result.reason.message}`
+                );
+            }
+        });
+
+        renderSuppliers();
+        renderInvoices();
+        renderPayments();
+        renderOverview();
+
+        if (errors.length) {
+            notify(
+                "Some AP data could not be loaded: " +
+                errors.join(" | "),
+                "error"
+            );
+        } else {
+            notify(
+                "Accounts Payable data loaded successfully.",
+                "success"
+            );
+        }
+    } catch (error) {
+        notify(error.message, "error");
+    } finally {
+        $("refreshBtn").disabled = false;
+    }
+}
+function switchView(name){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.view===name));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+name));}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.go)));
+$("refreshBtn").addEventListener("click",refreshAll);
+["supplierSearch","supplierStatusFilter"].forEach(id=>$(id).addEventListener("input",renderSuppliers));
+["invoiceSearch","invoiceStatusFilter"].forEach(id=>$(id).addEventListener("input",renderInvoices));
+$("paymentSearch").addEventListener("input",renderPayments);
+function field(name,label,type="text",required=false,options=[]){const id="f_"+name;let control;if(type==="select"){control=`<select id="${id}" name="${name}" ${required?"required":""}>${options.map(o=>`<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("")}</select>`}else if(type==="textarea"){control=`<textarea id="${id}" name="${name}" ${required?"required":""}></textarea>`}else{control=`<input id="${id}" name="${name}" type="${type}" ${required?"required":""} ${type==="number"?'min="0" step="0.01"':""}>`}return `<div class="field"><label for="${id}">${esc(label)}${required?" *":""}</label>${control}</div>`}
+const forms={
+ supplier:{title:"Supplier",path:AP_API.vendors,fields:[
+  ["vendor_code","Supplier Code","text",true],["vendor_name","Supplier Name","text",true],["email","Email","email",false],["phone","Phone","tel",false],["tax_id","Tax ID / GSTIN","text",false],["payment_terms","Payment Terms (days)","number",false],["address","Address","textarea",false],["status","Status","select",true,[{value:"Active",label:"Active"},{value:"Inactive",label:"Inactive"}]]
+ ]},
+ invoice:{title:"Supplier Invoice",path:AP_API.invoices,fields:[
+  ["invoice_number","Invoice Number","text",true],["supplier_id","Supplier","select",true,[]],["invoice_date","Invoice Date","date",true],["due_date","Due Date","date",true],["currency","Currency","select",true,[{value:"INR",label:"INR"},{value:"USD",label:"USD"},{value:"EUR",label:"EUR"},{value:"GBP",label:"GBP"}]],["total_amount","Invoice Amount","number",true],["tax_amount","Tax Amount","number",false],["description","Description","textarea",false],["status","Status","select",true,[{value:"Draft",label:"Draft"},{value:"Pending",label:"Pending"},{value:"Approved",label:"Approved"}]]
+ ]},
+ payment:{title:"Record Supplier Payment",path:AP_API.payments,fields:[
+  ["supplier_id","Supplier","select",true,[]],["invoice_id","Invoice","select",true,[]],["payment_date","Payment Date","date",true],["amount","Payment Amount","number",true],["payment_method","Payment Method","select",true,[{value:"Bank Transfer",label:"Bank Transfer"},{value:"UPI",label:"UPI"},{value:"Cheque",label:"Cheque"},{value:"Cash",label:"Cash"},{value:"Other",label:"Other"}]],["payment_reference","Payment Reference","text",false],["notes","Notes","textarea",false]
+ ]}
+};
+function optionsFor(type,name){if(type==="supplier"&&name==="supplier_id")return state.suppliers.map(s=>({value:getId(s),label:`${val(s,["supplier_code","code"],"")} — ${val(s,["supplier_name","name"],"Supplier")}`}));if(type==="payment"&&name==="supplier_id")return state.suppliers.map(s=>({value:getId(s),label:`${val(s,["supplier_code","code"],"")} — ${val(s,["supplier_name","name"],"Supplier")}`}));if(type==="payment"&&name==="invoice_id")return state.invoices.filter(i=>balance(i)>0).map(i=>({value:getId(i),label:`${invoiceNo(i)} — ${supplierName(i)} (${money(balance(i))} due)`}));return []}
+function openForm(type,record=null){const cfg=forms[type];state.modalType=type;state.editingId=record?getId(record):null;$("modalTitle").textContent=(record?"Edit ":"Add ")+cfg.title;
+ $("formFields").innerHTML=cfg.fields.map(([name,label,kind,required,opts])=>{let actualOpts=opts||[];if(kind==="select"){if(name==="supplier_id"||name==="invoice_id")actualOpts=[{value:"",label:"Select…"},...optionsFor(type,name)];else actualOpts=[{value:"",label:"Select…"},...actualOpts]}return field(name,label,kind,required,actualOpts)}).join("");
+ const form=$("recordForm");form.dataset.path=cfg.path;form.dataset.type=type;
+ if(record){for(const [name] of cfg.fields){const input=form.elements.namedItem(name);if(input&&record[name]!==undefined&&record[name]!==null)input.value=record[name]}}
+ if(type==="invoice"&&!record){const today=new Date().toISOString().slice(0,10);form.elements.invoice_date.value=today;form.elements.due_date.value=today}
+ if(type==="payment"&&!record){form.elements.payment_date.value=new Date().toISOString().slice(0,10)}
+ $("modalBackdrop").classList.add("show");
+}
+function closeForm(){$("modalBackdrop").classList.remove("show");$("recordForm").reset();state.modalType=null;state.editingId=null}
+$("closeModal").addEventListener("click",closeForm);$("cancelModal").addEventListener("click",closeForm);$("modalBackdrop").addEventListener("click",e=>{if(e.target===$("modalBackdrop"))closeForm()});
+$("addSupplierBtn").addEventListener("click",()=>openForm("supplier"));$("newSupplierBtn").addEventListener("click",()=>openForm("supplier"));
+$("addInvoiceBtn").addEventListener("click",()=>openForm("invoice"));$("newInvoiceBtn").addEventListener("click",()=>openForm("invoice"));
+$("recordPaymentBtn").addEventListener("click",()=>openForm("payment"));
+document.addEventListener("click",e=>{
+ const edit=e.target.closest("[data-edit]");if(edit){const type=edit.dataset.edit,rows=state[type==="supplier"?"suppliers":"invoices"],row=rows.find(r=>String(getId(r))===edit.dataset.id);if(row)openForm(type,row)}
+ const pay=e.target.closest("[data-pay]");if(pay){const row=state.invoices.find(r=>String(getId(r))===pay.dataset.pay);openForm("payment",row?{supplier_id:val(row,["supplier_id","vendor_id"]),invoice_id:getId(row)}:null)}
+});
+$("recordForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const form=e.currentTarget,type=form.dataset.type,cfg=forms[type],payload={};payload.company_id = getCompanyId();
+ for(const [name,,kind] of cfg.fields){const input=form.elements.namedItem(name);if(!input)continue;let v=input.value;if(v==="")v=null;if(kind==="number"&&v!==null)v=Number(v);payload[name]=v}
+ $("submitRecord").disabled=true;
+ try{
+  const path=state.editingId?`${cfg.path}/${encodeURIComponent(state.editingId)}`:cfg.path;
+  await api(path,{method:state.editingId?"PUT":"POST",body:JSON.stringify(payload)});
+  closeForm();notify(`${cfg.title} saved successfully.`,"success");await refreshAll();
+ }catch(err){notify("Could not save record: "+err.message+". Check the API route and expected request fields in ap_router.py.","error")}finally{$("submitRecord").disabled=false}
+});
+$("exportCsvBtn").addEventListener("click",()=>{
+ const rows=[["Invoice Number","Supplier","Invoice Date","Due Date","Total Amount","Balance Due","Status"],...state.invoices.map(i=>[invoiceNo(i),supplierName(i),val(i,["invoice_date"],""),val(i,["due_date"],""),amount(i),balance(i),statusText(i)])];
+ const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="accounts-payable-report.csv";a.click();URL.revokeObjectURL(url);
+});
+refreshAll();
+</script>
+</body>
+</html>
